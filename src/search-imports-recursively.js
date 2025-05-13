@@ -3,11 +3,13 @@ const path = require('path');
 const vscode = require('vscode');
 
 const { TypescriptParser } = require('typescript-parser');
-const { concat, Global, join, Relative, resolve } = require('./Path');
-const { findExistingFileInList } = require('./utils');
+const moduleResolution = require('resolve/sync');
+
+const { Global, Relative } = require('./path/Path');
+const { concat, join, resolve } = require('./path/utils');
 
 /**
- * @import { GlobalPath } from './Path';
+ * @import { GlobalPath } from './path/Path';
  * 
  * @typedef {{
  *      name: string,
@@ -44,28 +46,16 @@ async function parseFile(globalAbsolutePath) {
      * @param {{ libraryName: string }} param0
      * @returns {Promise<ModuleDefinition | null>}
      */
-    const importToModuleDefinition = async ({ libraryName }) => {
+    const importToModuleDefinition = ({ libraryName }) => {
         const isRelativePath = libraryName.startsWith('.');
         if (!isRelativePath) { return null; }
 
         const relativeImportPath = Relative(libraryName);
         const absoluteImportPath = resolve(basePath, relativeImportPath);
-        const completeAbsolutePath = await ensureFilepathWithExtension(absoluteImportPath).catch(e => {
-            console.error(`Error resolving import path ${relativeImportPath}: ${e.message}`);
-            return null;
-        });
+        const completeAbsolutePath = ensureFilepathWithExtension(absoluteImportPath);
         if (completeAbsolutePath === null) { return null; }
 
-        const extension = path.extname(completeAbsolutePath.valueOf());
-        const isValidExtension = supportedExtensions.some(ext => ext === extension);
-        if (!isValidExtension) { return null; }
-
-        const fileExists = fs.existsSync(completeAbsolutePath);
-        if (!fileExists) {
-            console.error(`File does not exist: ${completeAbsolutePath}`);
-            return null;
-        }
-
+        
         try {
             return parseFile(completeAbsolutePath);
         } catch (e) {
@@ -89,33 +79,42 @@ async function parseFile(globalAbsolutePath) {
 /**
  * Ensures a filepath has an extension.
  * @param {GlobalPath} importedPath
- * @returns {Promise<GlobalPath | null>}
+ * @returns {GlobalPath | null}
  */
-async function ensureFilepathWithExtension(importedPath) {
+function ensureFilepathWithExtension(importedPath) {
     if (path.extname(importedPath.valueOf())) { return importedPath; }
-
-    const completeFileName = await attachPotentialBarrelAndFileExtension(importedPath);
-    if (!completeFileName) { return null; }
-
-    const workspacePath = Global(vscode.workspace.workspaceFolders[0].uri.fsPath);
-    const absolutePath = join(workspacePath, completeFileName);
-    return absolutePath;
+    return attachPotentialBarrelAndFileExtension(importedPath);
 }
 
 /**
  * Attaches potential barrel and file extension to an imported path.
  * @param {GlobalPath} importedPath
- * @returns {Promise<GlobalPath | null>}
+ * @returns {GlobalPath | null}
  */
-async function attachPotentialBarrelAndFileExtension(importedPath) {
-    const checkExistsAsync = (pather) =>
-        findExistingFileInList(supportedExtensions.map(pather));
+function attachPotentialBarrelAndFileExtension(importedPath) {
+    
+    const maybeFoundPathWithExtension = joinExtensionAndCheckExists(ext => concat(importedPath, ext));
+    if (maybeFoundPathWithExtension) return maybeFoundPathWithExtension;
 
-    const foundExtension = await checkExistsAsync(ext => concat(importedPath, ext));
-    if (foundExtension) { return concat(importedPath, foundExtension); }
-
-    const foundBarrelExtension = await checkExistsAsync(ext => concat(importedPath, '/index', ext));
-    if (foundBarrelExtension) { return join(importedPath, 'index' + foundBarrelExtension); }
+    const maybeFoundBarrelFile = joinExtensionAndCheckExists(ext => concat(importedPath, '/index', ext));
+    if (maybeFoundBarrelFile) return maybeFoundBarrelFile;
 
     return null;
 }
+
+/**
+ * @typedef {function(string): GlobalPath} Pather
+ * @param {Pather} pather 
+ * @returns { GlobalPath | null }
+ */
+const joinExtensionAndCheckExists = (pather) => {
+    /** @type {GlobalPath | null} */
+    let foundFile = null;
+    supportedExtensions.forEach(ext => {
+        const completePath = pather(ext);
+        const fileExists = fs.existsSync(completePath.valueOf());
+        if (fileExists) foundFile = completePath;
+    });
+    return foundFile;
+}
+
