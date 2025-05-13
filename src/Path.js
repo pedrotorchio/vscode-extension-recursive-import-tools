@@ -15,6 +15,7 @@ const path = require('path');
  * @returns {PathString}
  */
 function Path(rawPath, type) {
+    // @ts-ignore
     return Object.defineProperty(new String(rawPath), '__importType', {
         value: type,
         enumerable: false,
@@ -37,7 +38,7 @@ function type(path) {
  * @returns {GlobalPath}
  */
 function Global(rawPath) {
-    return Path(rawPath, 'global');
+    return /** @type {GlobalPath} */ (Path(rawPath, 'global'));
 }
 
 /**
@@ -46,7 +47,7 @@ function Global(rawPath) {
  * @returns {RelativeImportPath}
  */
 function Relative(rawPath) {
-    return Path(rawPath, 'relative');
+    return /** @type {RelativeImportPath} */ (Path(rawPath, 'relative'));
 }
 
 /**
@@ -55,7 +56,7 @@ function Relative(rawPath) {
  * @returns {LibraryImportPath}
  */
 function Library(rawPath) {
-    return Path(rawPath, 'library');
+    return /** @type {LibraryImportPath} */ (Path(rawPath, 'library'));
 }
 
 /**
@@ -66,7 +67,7 @@ function Library(rawPath) {
  * @returns {T}
  */
 function join(basePath, relativePath) {
-    return Path(path.join(basePath.valueOf(), relativePath), type(basePath));
+    return /** @type {T} */ (Path(path.join(basePath.valueOf(), relativePath.valueOf()), type(basePath)));
 }
 
 /**
@@ -77,7 +78,7 @@ function join(basePath, relativePath) {
  * @returns {T}
  */
 function resolve(basePath, relativePath) {
-    return path.resolve(basePath.valueOf(), relativePath);
+    return /** @type {T} */ (path.resolve(basePath.valueOf(), relativePath.valueOf()));
 }
 
 /**
@@ -89,7 +90,7 @@ function resolve(basePath, relativePath) {
  */
 function concat(firstPath, ...paths) {
     const concatenatedPath = paths.reduce((acc, cur) => acc + cur.valueOf(), firstPath.valueOf());
-    return Path(concatenatedPath, type(firstPath));
+    return /** @type {T} */ (Path(concatenatedPath, type(firstPath)));
 }
 
 module.exports = {
