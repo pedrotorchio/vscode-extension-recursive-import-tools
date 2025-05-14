@@ -49,9 +49,19 @@ function type(path) {
     return path.__importType;
 }
 
+/**
+ * Checks if a path exists.
+ * @param {PathString} pathString
+ * @returns {string}
+ */
+function ext(pathString) {
+    return path.extname(pathString.valueOf());
+}
+
 module.exports = {
     join,
     resolve,
     concat,
     type,
+    ext
 }

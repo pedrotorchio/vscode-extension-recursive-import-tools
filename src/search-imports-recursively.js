@@ -5,7 +5,7 @@ const vscode = require('vscode');
 const { TypescriptParser } = require('typescript-parser');
 
 const { Global, Relative } = require('./path/Path');
-const { concat, resolve, join } = require('./path/utils');
+const { concat, resolve, join, ext } = require('./path/utils');
 
 /**
  * @import { GlobalPath } from './path/Path';
@@ -25,7 +25,7 @@ const supportedExtensions = ['.ts', '.tsx', '.js', '.jsx'];
 module.exports.searchImportsRecursively = async () => {
     const entriesAsync = vscode.window.visibleTextEditors.map(editor => parseFile(Global(editor.document.uri.fsPath)));
     const moduleTree = await Promise.all(entriesAsync);
-    console.log(JSON.stringify(moduleTree, null, 2));
+    console.dir(moduleTree);
 };
 
 /**
@@ -51,9 +51,8 @@ async function parseFile(globalAbsolutePath) {
         const relativeImportPath = Relative(libraryName);
         const absoluteImportPath = resolve(basePath, relativeImportPath);
         const completeAbsolutePath = ensureFilepathWithExtension(absoluteImportPath);
-        if (completeAbsolutePath === null) { return null; }
+        if (!completeAbsolutePath) return null;
 
-        
         try {
             return parseFile(completeAbsolutePath);
         } catch (e) {
@@ -69,7 +68,7 @@ async function parseFile(globalAbsolutePath) {
         name: globalAbsolutePath,
         path: globalAbsolutePath,
         contents: contentsString,
-        extension: path.extname(globalAbsolutePath.valueOf()),
+        extension: ext(globalAbsolutePath),
         imports: moduleDefinitions.filter(Boolean)
     };
 }
@@ -80,7 +79,8 @@ async function parseFile(globalAbsolutePath) {
  * @returns {GlobalPath | null}
  */
 function ensureFilepathWithExtension(importedPath) {
-    if (path.extname(importedPath.valueOf())) { return importedPath; }
+    const importedPathExtension = ext(importedPath);
+    if (supportedExtensions.some(ext => ext === importedPathExtension)) return importedPath;
     return attachPotentialBarrelAndFileExtension(importedPath);
 }
 
@@ -91,10 +91,10 @@ function ensureFilepathWithExtension(importedPath) {
  */
 function attachPotentialBarrelAndFileExtension(importedPath) {
     
-    const maybeFoundPathWithExtension = joinExtensionAndCheckExists(ext => concat(importedPath, ext));
+    const maybeFoundPathWithExtension = forEachExtensionCheckExists(ext => concat(importedPath, ext));
     if (maybeFoundPathWithExtension) return maybeFoundPathWithExtension;
 
-    const maybeFoundBarrelFile = joinExtensionAndCheckExists(ext => join(importedPath, 'index' + ext));
+    const maybeFoundBarrelFile = forEachExtensionCheckExists(ext => join(importedPath, 'index' + ext));
     if (maybeFoundBarrelFile) return maybeFoundBarrelFile;
 
     return null;
@@ -105,7 +105,7 @@ function attachPotentialBarrelAndFileExtension(importedPath) {
  * @param {Pather} pather 
  * @returns { GlobalPath | null }
  */
-const joinExtensionAndCheckExists = (pather) => {
+const forEachExtensionCheckExists = (pather) => {
     /** @type {GlobalPath | null} */
     let foundFile = null;
     supportedExtensions.forEach(ext => {
