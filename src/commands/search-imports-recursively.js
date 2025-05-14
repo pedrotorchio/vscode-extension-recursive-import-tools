@@ -1,23 +1,15 @@
+/**
+ * @import { GlobalPath } from '../path/Path';
+ * @import { ModuleDefinition } from '../tree/ModuleDefinition';
+ */
 const fs = require('fs');
 const path = require('path');
 const vscode = require('vscode');
 
 const { TypescriptParser } = require('typescript-parser');
 
-const { Global, Relative } = require('./path/Path');
-const { concat, resolve, join, ext } = require('./path/utils');
-
-/**
- * @import { GlobalPath } from './path/Path';
- * 
- * @typedef {{
- *      name: string,
- *      path: string,
- *      contents: string,
- *      extension: string,
- *      imports: ModuleDefinition[]
- * }} ModuleDefinition;
- */
+const { Global, Relative } = require('../path/Path');
+const { concat, resolve, join, ext } = require('../path/utils');
 
 const typescriptParser = new TypescriptParser();
 const supportedExtensions = ['.ts', '.tsx', '.js', '.jsx'];
