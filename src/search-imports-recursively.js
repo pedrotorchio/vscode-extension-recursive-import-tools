@@ -3,10 +3,9 @@ const path = require('path');
 const vscode = require('vscode');
 
 const { TypescriptParser } = require('typescript-parser');
-const moduleResolution = require('resolve/sync');
 
 const { Global, Relative } = require('./path/Path');
-const { concat, join, resolve } = require('./path/utils');
+const { concat, resolve, join } = require('./path/utils');
 
 /**
  * @import { GlobalPath } from './path/Path';
@@ -27,7 +26,6 @@ module.exports.searchImportsRecursively = async () => {
     const entriesAsync = vscode.window.visibleTextEditors.map(editor => parseFile(Global(editor.document.uri.fsPath)));
     const moduleTree = await Promise.all(entriesAsync);
     console.log(JSON.stringify(moduleTree, null, 2));
-    debugger;
 };
 
 /**
@@ -96,7 +94,7 @@ function attachPotentialBarrelAndFileExtension(importedPath) {
     const maybeFoundPathWithExtension = joinExtensionAndCheckExists(ext => concat(importedPath, ext));
     if (maybeFoundPathWithExtension) return maybeFoundPathWithExtension;
 
-    const maybeFoundBarrelFile = joinExtensionAndCheckExists(ext => concat(importedPath, '/index', ext));
+    const maybeFoundBarrelFile = joinExtensionAndCheckExists(ext => join(importedPath, 'index' + ext));
     if (maybeFoundBarrelFile) return maybeFoundBarrelFile;
 
     return null;
