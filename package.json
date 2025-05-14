@@ -12,6 +12,12 @@
   "activationEvents": [],
   "main": "./extension.js",
   "contributes": {
+    "viewsWelcome": [
+      {
+        "view": "imports-tree",
+        "contents": "No file selected. Please select a file to see its imports."
+      }
+    ],
     "views": {
       "explorer": [
         {
