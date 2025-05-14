@@ -22,8 +22,8 @@ function activate(context) {
 	// Now provide the implementation of the command with  registerCommand
 	// The commandId parameter must match the command field in package.json
 	const importTreeDataProvider = new ImportTreeDataProvider();
-
-	const disposable = vscode.commands.registerCommand('import-recursive-search.search', searchImportsRecursively(importTreeDataProvider));
+	const importTreeBuildCleanup = searchImportsRecursively(importTreeDataProvider);
+	const disposable = vscode.commands.registerCommand('import-recursive-search.search', importTreeBuildCleanup.execute);
 	vscode.window.registerTreeDataProvider('imports-tree', importTreeDataProvider);
 
 	context.subscriptions.push(disposable);
