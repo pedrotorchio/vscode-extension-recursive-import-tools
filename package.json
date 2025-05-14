@@ -12,11 +12,22 @@
   "activationEvents": [],
   "main": "./extension.js",
   "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "id": "imports-tree",
+          "name": "Imports tree"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "import-recursive-search.search",
         "title": "Search imports recursively"
       }
+    ],
+    "activationEvents": [
+      "onView:imports-tree"
     ]
   },
   "scripts": {

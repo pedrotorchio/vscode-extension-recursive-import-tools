@@ -1,23 +1,26 @@
-
+const vscode = require('vscode');
 /**
  * @import { ModuleDefinition } from './ModuleDefinition';
  * @import { TreeDataProvider } from 'vscode';
  * @class @implements {TreeDataProvider<ModuleDefinition>}
  */
 class ImportTreeDataProvider {
-    constructor(/**@type {ModuleDefinition[]}*/tree) {
+    constructor() {
         /** @type {ModuleDefinition[]} */
-        this.tree = tree;
+        this.tree = [];
+        this._onDidChangeTreeData = new vscode.EventEmitter();
+        this.onDidChangeTreeData = this._onDidChangeTreeData.event;
     }
+
+    setTree(/**@type {ModuleDefinition[]} */ tree) {
+        this.tree = tree;
+        this._onDidChangeTreeData.fire();
+    }
+
     getTreeItem(/**@type {ModuleDefinition} */ element) {
         return {
-            label: element.name,
-            collapsibleState: element.imports.length > 0 ? 1 : 0,
-            command: {
-                command: 'extension.openModule',
-                title: 'Open Module',
-                arguments: [element],
-            },
+            label: element.name.valueOf(),
+            collapsibleState: element.imports.length > 0 ? 1 : 0
         };
     }
     getChildren(/**@type {ModuleDefinition}*/element) {

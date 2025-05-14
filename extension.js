@@ -1,4 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
+
+const ImportTreeDataProvider = require('./src/tree/TreeDataProvider');
+
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
 const { searchImportsRecursively } = require('./src/commands/search-imports-recursively');
@@ -18,7 +21,10 @@ function activate(context) {
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with  registerCommand
 	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('import-recursive-search.search', searchImportsRecursively);
+	const importTreeDataProvider = new ImportTreeDataProvider();
+
+	const disposable = vscode.commands.registerCommand('import-recursive-search.search', searchImportsRecursively(importTreeDataProvider));
+	vscode.window.registerTreeDataProvider('imports-tree', importTreeDataProvider);
 
 	context.subscriptions.push(disposable);
 }
