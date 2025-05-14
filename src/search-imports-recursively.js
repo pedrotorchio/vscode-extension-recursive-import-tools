@@ -81,16 +81,7 @@ async function parseFile(globalAbsolutePath) {
 function ensureFilepathWithExtension(importedPath) {
     const importedPathExtension = ext(importedPath);
     if (supportedExtensions.some(ext => ext === importedPathExtension)) return importedPath;
-    return attachPotentialBarrelAndFileExtension(importedPath);
-}
 
-/**
- * Attaches potential barrel and file extension to an imported path.
- * @param {GlobalPath} importedPath
- * @returns {GlobalPath | null}
- */
-function attachPotentialBarrelAndFileExtension(importedPath) {
-    
     const maybeFoundPathWithExtension = forEachExtensionCheckExists(ext => concat(importedPath, ext));
     if (maybeFoundPathWithExtension) return maybeFoundPathWithExtension;
 
