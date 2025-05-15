@@ -22,11 +22,11 @@ function activate(context) {
 	// Now provide the implementation of the command with  registerCommand
 	// The commandId parameter must match the command field in package.json
 	const importTreeDataProvider = new ImportTreeDataProvider();
-	const importTreeBuildCleanup = searchImportsRecursively(importTreeDataProvider);
-	const disposable = vscode.commands.registerCommand('import-recursive-search.search', importTreeBuildCleanup.execute);
+	const importsTree = searchImportsRecursively(importTreeDataProvider);
 	vscode.window.registerTreeDataProvider('imports-tree', importTreeDataProvider);
-
-	context.subscriptions.push(disposable);
+	
+	const disposable = vscode.commands.registerCommand('import-recursive-search.search', importsTree.execute);
+	context.subscriptions.push(disposable, importsTree);
 }
 
 // This method is called when your extension is deactivated
