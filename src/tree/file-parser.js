@@ -7,6 +7,7 @@ const path = require('path');
 const vscode = require('vscode');
 
 const { TypescriptParser } = require('typescript-parser');
+const findPackageJson = require('find-package-json');
 
 const { Global, Relative } = require('../path/Path');
 const { concat, resolve, join, ext } = require('../path/utils');
@@ -50,8 +51,12 @@ async function parseFile(globalAbsolutePath) {
     const moduleDefinitionPromises = parsedFile.imports.map(importToModuleDefinition);
     const moduleDefinitions = await Promise.all(moduleDefinitionPromises);
 
+    const { value: packageJson, filename: packagePath} = findPackageJson(globalAbsolutePath.valueOf()).next();
+    const relativePath = Relative(path.relative(path.dirname(packagePath), globalAbsolutePath.valueOf()));
+    const itemName = join(packageJson.name, relativePath);
+
     return {
-        name: globalAbsolutePath,
+        name: itemName,
         path: globalAbsolutePath,
         contents: contentsString,
         extension: ext(globalAbsolutePath),
