@@ -1,5 +1,4 @@
 const vscode = require('vscode');
-const { TypescriptParser } = require('typescript-parser');
 
 const { Global } = require('../path/Path');
 const { parseFile } = require('../tree/file-parser');
