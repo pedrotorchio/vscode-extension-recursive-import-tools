@@ -12,7 +12,9 @@ const { parseFile } = require('../tree/file-parser');
 module.exports.searchImportsRecursively = (/** @type {ImportTreeDataProvider} */ dataProvider) => {
 
     const buildFileTree = buildFileTreeAndUpdateDataProvider(dataProvider);
+
     const onChangeOpenFilesListener = vscode.window.onDidChangeVisibleTextEditors(buildFileTree);
+    buildFileTree();
     
     return {
         dispose: () => onChangeOpenFilesListener.dispose(),
