@@ -1,16 +1,19 @@
-const vscode = require('vscode');
-
-const { Global } = require('../path/Path');
-const { parseFile } = require('../tree/file-parser');
 /**
  * @import { Disposable } from 'vscode';
  * @import ImportTreeDataProvider from '../tree/TreeDataProvider';
- * @param ImportTreeDataProvider dataProvider
+ * @import { WorkspaceMap } from '../package/utils';
+ */
+const vscode = require('vscode');
+const { Global } = require('../path/Path');
+const { parseFile } = require('../tree/file-parser');
+/**
+ * @param {ImportTreeDataProvider} dataProvider
+ * @param {WorkspaceMap} workspaceMap
  * @returns {Disposable & { execute: () => Promise<void> }}
  */
-module.exports.searchImportsRecursively = (/** @type {ImportTreeDataProvider} */ dataProvider) => {
+module.exports.searchImportsRecursively = (dataProvider, workspaceMap) => {
 
-    const buildFileTree = buildFileTreeAndUpdateDataProvider(dataProvider);
+    const buildFileTree = buildFileTreeAndUpdateDataProvider(dataProvider, workspaceMap);
 
     const onChangeOpenFilesListener = vscode.window.onDidChangeVisibleTextEditors(buildFileTree);
     buildFileTree();
@@ -21,8 +24,18 @@ module.exports.searchImportsRecursively = (/** @type {ImportTreeDataProvider} */
     };
 };
 
-const buildFileTreeAndUpdateDataProvider = (/** @type {ImportTreeDataProvider} */ dataProvider) => async () => {
-    const entriesAsync = vscode.window.visibleTextEditors.map(editor => parseFile(Global(editor.document.uri.fsPath)));
+/**
+ * Builds the file tree and updates the data provider.
+ * @param {ImportTreeDataProvider} dataProvider
+ * @param {WorkspaceMap} workspaceMap
+ * @returns {() => Promise<void>}
+ */
+const buildFileTreeAndUpdateDataProvider = (dataProvider, workspaceMap) => async () => {
+    const entriesAsync = vscode.window.visibleTextEditors.map(editor => parseFile({
+        absolutePath: Global(editor.document.uri.fsPath), 
+        treeDataProvider: dataProvider, 
+        workspaceMap
+    }));
     const moduleTree = await Promise.all(entriesAsync);
     dataProvider.setTree(moduleTree);
 }

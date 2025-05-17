@@ -1,73 +1,129 @@
+const { findNearestPackageJson } = require('../package/utils');
 /**
- * @import { GlobalPath } from '../path/Path';
+ * @import { GlobalPath, LibraryImportPath, RelativeImportPath } from '../path/Path';
  * @import { ModuleDefinition } from '../tree/ModuleDefinition';
+ * @import { WorkspaceMap } from '../package/utils';
+ * @import ImportTreeDataProvider from '../tree/TreeDataProvider';
  */
 const fs = require('fs');
 const path = require('path');
 const vscode = require('vscode');
 
 const { TypescriptParser } = require('typescript-parser');
-const findPackageJson = require('find-package-json');
 
-const { Global, Relative } = require('../path/Path');
+const { Global, Relative, Library } = require('../path/Path');
 const { concat, resolve, join, ext } = require('../path/utils');
 
 const typescriptParser = new TypescriptParser();
 const supportedExtensions = ['.ts', '.tsx', '.js', '.jsx'];
-
+const context = {
+    recursingCount: 0
+};
 /**
  * Parses a file and returns its module definition.
- * @param {import("../path/Path").GlobalPath} globalAbsolutePath
- * @returns {Promise<import("./ModuleDefinition").ModuleDefinition>}
+ * @param {{
+ *  absolutePath: GlobalPath,
+ *  workspaceMap: WorkspaceMap
+ *  treeDataProvider: ImportTreeDataProvider
+ * }} args
+ * @returns {Promise<ModuleDefinition>}
  */
-async function parseFile(globalAbsolutePath) {
-    const basePath = Global(path.dirname(globalAbsolutePath.valueOf()));
-    const contentsBytes = await vscode.workspace.fs.readFile(vscode.Uri.file(globalAbsolutePath));
+async function parseFile({ absolutePath,  workspaceMap, treeDataProvider }) {
+    if (treeDataProvider.readFromCache(absolutePath)) {
+        console.log(`File already parsed: ${absolutePath}`);
+        return treeDataProvider.readFromCache(absolutePath);
+    }
+    context.recursingCount++;
+    console.log(`Parsing file: ${path} (${context.recursingCount})`);
+    
+    const basePath = Global(path.dirname(absolutePath.valueOf()));
+    const contentsBytes = await vscode.workspace.fs.readFile(vscode.Uri.file(absolutePath));
     const contentsString = Buffer.from(contentsBytes).toString('utf8');
     const parsedFile = await typescriptParser.parseSource(contentsString);
 
     /**
      * Converts an import to a module definition.
      * @param {{ libraryName: string }} param0
-     * @returns {Promise<import("./ModuleDefinition").ModuleDefinition | null>}
+     * @returns {Promise<ModuleDefinition | null>}
      */
     const importToModuleDefinition = ({ libraryName }) => {
+        if (path.isAbsolute(libraryName)) return null;
         const isRelativePath = libraryName.startsWith('.');
-        if (!isRelativePath) { return null; }
+        const workspacePackageAbsolutePath = findWorkspacePackage(libraryName, workspaceMap);
+        if (!isRelativePath && !workspacePackageAbsolutePath) return null;
 
-        const relativeImportPath = Relative(libraryName);
-        const absoluteImportPath = resolve(basePath, relativeImportPath);
+        const absoluteImportPath = isRelativePath 
+            ? resolve(basePath, libraryName)
+            : workspacePackageAbsolutePath;
+
         const completeAbsolutePath = ensureFilepathWithExtension(absoluteImportPath);
         if (!completeAbsolutePath) return null;
 
         try {
-            return parseFile(completeAbsolutePath);
+            return parseFile({ absolutePath: completeAbsolutePath, workspaceMap, treeDataProvider});
         } catch (e) {
             console.error(`Error parsing file ${completeAbsolutePath}: ${e.message}`);
             return null;
         }
     };
 
-    const moduleDefinitionPromises = parsedFile.imports.map(importToModuleDefinition);
-    const moduleDefinitions = await Promise.all(moduleDefinitionPromises);
+    /** @type {Promise<ModuleDefinition[]>} */
+    const moduleDefinitions = (async () => {   
+        if (context.recursingCount < 100) {
+            const moduleDefinitionPromises = parsedFile.imports.map(importToModuleDefinition);
+            const moduleDefinitions = await Promise.all(moduleDefinitionPromises);
+            return moduleDefinitions.filter(Boolean);
+        } else {
+            console.warn(`Recursion limit reached`);
+            return [];
+        }
+    })();
+    const { path: packagePath, package: packageJson } = findNearestPackageJson(absolutePath);
+    const relativePath = Relative(path.relative(path.dirname(packagePath.valueOf()), absolutePath.valueOf()));
+    const itemName = join(Library(packageJson.name), relativePath);
 
-    const { value: packageJson, filename: packagePath} = findPackageJson(globalAbsolutePath.valueOf()).next();
-    const relativePath = Relative(path.relative(path.dirname(packagePath), globalAbsolutePath.valueOf()));
-    const itemName = join(packageJson.name, relativePath);
-
-    return {
+    /** @type {ModuleDefinition} */
+    const treeItem = {
         name: itemName,
-        path: globalAbsolutePath,
+        path: absolutePath,
         contents: contentsString,
-        extension: ext(globalAbsolutePath),
-        imports: moduleDefinitions.filter(Boolean)
+        extension: ext(absolutePath),
+        imports: await moduleDefinitions
     };
+
+    treeDataProvider.writeToCache(treeItem);
+    return treeItem;
+}
+/**
+ *
+ * @param {string} importedPath
+ * @param {Readonly<WorkspaceMap>} workspaceMap
+ * @returns {GlobalPath | null}
+ */
+const findWorkspacePackage = (importedPath, workspaceMap) => {
+        const packageNameSeparated = importedPath.split('/');
+        const packageNameWithoutScope = packageNameSeparated[0];
+        if (workspaceMap.has(packageNameWithoutScope)) {
+            const packageGlobalRoot = workspaceMap.get(packageNameWithoutScope);
+            const internalPath = Relative(packageNameSeparated.slice(1).join('/'));
+            const importedGlobalPath = resolve(packageGlobalRoot, internalPath); 
+            return importedGlobalPath;
+        }
+
+        const packageNameWithScope = packageNameSeparated.slice(0, 2).join('/');
+        if (workspaceMap.has(packageNameWithScope)) {
+            const packageGlobalRoot = workspaceMap.get(packageNameWithScope);
+            const internalPath = Relative(packageNameSeparated.slice(2).join('/'));
+            const importedGlobalPath = resolve(packageGlobalRoot, internalPath); 
+            return importedGlobalPath;
+        }
+        return null;
 }
 
 /**
  * Ensures a filepath has an extension.
- * @param {import("../path/Path").GlobalPath} importedPath
- * @returns {import("../path/Path").GlobalPath | null}
+ * @param {GlobalPath} importedPath
+ * @returns {GlobalPath | null}
  */
 function ensureFilepathWithExtension(importedPath) {
     const importedPathExtension = ext(importedPath);
@@ -83,12 +139,12 @@ function ensureFilepathWithExtension(importedPath) {
 }
 
 /**
- * @typedef {function(string): import("../path/Path").GlobalPath} Pather
+ * @typedef {function(string): GlobalPath} Pather
  * @param {Pather} pather 
- * @returns { import("../path/Path").GlobalPath | null }
+ * @returns { GlobalPath | null }
  */
 const forEachExtensionCheckExists = (pather) => {
-    /** @type {import("../path/Path").GlobalPath | null} */
+    /** @type {GlobalPath | null} */
     let foundFile = null;
     supportedExtensions.forEach(ext => {
         const completePath = pather(ext);

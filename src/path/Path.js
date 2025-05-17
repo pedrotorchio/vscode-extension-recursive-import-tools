@@ -13,8 +13,9 @@
  * @returns {PathString}
  */
 function Path(rawPath, type) {
+    const withUnixSeparators = rawPath.replaceAll(/\\/g, '/');
     // @ts-ignore
-    return Object.defineProperty(new String(rawPath), '__importType', {
+    return Object.defineProperty(new String(withUnixSeparators), '__importType', {
         value: type,
         enumerable: false,
         writable: false,

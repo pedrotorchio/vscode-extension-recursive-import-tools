@@ -10,11 +10,14 @@ const fs = require('fs');
  * Joins a base path with a relative path.
  * @template {PathString} T
  * @param {T} basePath
- * @param {string} relativePath
+ * @param {...string} relativePaths
  * @returns {T}
  */
-function join(basePath, relativePath) {
-    return /** @type {T} */ (Path(path.join(basePath.valueOf(), relativePath.valueOf()), type(basePath)));
+function join(basePath, ...relativePaths) {
+    const paths = [basePath.valueOf(), ...relativePaths.map(value => value.valueOf())]
+    return /** @type {T} */ (
+        Path(path.join(...paths), type(basePath))
+    );
 }
 
 /**
