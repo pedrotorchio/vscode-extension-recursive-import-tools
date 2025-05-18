@@ -14,11 +14,28 @@ class ImportTreeDataProvider {
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
     }
 
-    writeToCache(/** @type {ModuleDefinition} */ module) {
-        this.importCache.set(module.path.valueOf(), module);
+    /**
+     * @param {Partial<ModuleDefinition>} module
+     * @returns {ModuleDefinition} a new reference to the module object
+     */
+    setItem(module) {
+        /**@type {ModuleDefinition}*/
+        const completeModule = Object.assign({
+            path: module.path,
+            name: '',
+            contents: '',
+            extension: '',
+            imports: [],
+        }, module);
+        this.importCache.set(module.path.valueOf(), completeModule);
+        return completeModule;
     }
-    readFromCache(/** @type {string} */ path) {
-        return this.importCache.get(path) ?? null;
+    /**
+     * @param {string} path
+     * @returns {ModuleDefinition|null}
+     */
+    getItem(path) {
+        return this.importCache.get(path.valueOf()) ?? null;
     }
 
     setTree(/**@type {ModuleDefinition[]} */ tree) {

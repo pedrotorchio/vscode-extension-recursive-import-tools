@@ -26,15 +26,21 @@ const context = {
  *  workspaceMap: WorkspaceMap
  *  treeDataProvider: ImportTreeDataProvider
  * }} args
- * @returns {Promise<ModuleDefinition>}
+ * @returns {Promise<ModuleDefinition | null>}
  */
 async function parseFile({ absolutePath,  workspaceMap, treeDataProvider }) {
-    if (treeDataProvider.readFromCache(absolutePath)) {
+    if (treeDataProvider.getItem(absolutePath)) {
         console.log(`File already parsed: ${absolutePath}`);
-        return treeDataProvider.readFromCache(absolutePath);
+        return null;
+        // return treeDataProvider.readFromCache(absolutePath);
     }
+    
+    const treeItem = treeDataProvider.setItem({ name: absolutePath, path: absolutePath });
+    
     context.recursingCount++;
-    console.log(`Parsing file: ${path} (${context.recursingCount})`);
+    console.log(`Parsing file: ${absolutePath} (${context.recursingCount})`);
+    if (context.recursingCount > 200) console.warn(`Recursive parsing passed 200 iterations.`);
+    if (context.recursingCount > 1000) throw new Error(`Recursive parsing passed 1000 iterations.`);
     
     const basePath = Global(path.dirname(absolutePath.valueOf()));
     const contentsBytes = await vscode.workspace.fs.readFile(vscode.Uri.file(absolutePath));
@@ -67,31 +73,22 @@ async function parseFile({ absolutePath,  workspaceMap, treeDataProvider }) {
         }
     };
 
-    /** @type {Promise<ModuleDefinition[]>} */
-    const moduleDefinitions = (async () => {   
-        if (context.recursingCount < 100) {
-            const moduleDefinitionPromises = parsedFile.imports.map(importToModuleDefinition);
-            const moduleDefinitions = await Promise.all(moduleDefinitionPromises);
-            return moduleDefinitions.filter(Boolean);
-        } else {
-            console.warn(`Recursion limit reached`);
-            return [];
-        }
-    })();
+    const moduleDefinitionPromises = parsedFile.imports.map(importToModuleDefinition);
+    const moduleDefinitionsUnfiltered = await Promise.all(moduleDefinitionPromises);
+    const moduleDefinitions = moduleDefinitionsUnfiltered.filter(Boolean);
     const { path: packagePath, package: packageJson } = findNearestPackageJson(absolutePath);
     const relativePath = Relative(path.relative(path.dirname(packagePath.valueOf()), absolutePath.valueOf()));
     const itemName = join(Library(packageJson.name), relativePath);
 
-    /** @type {ModuleDefinition} */
-    const treeItem = {
+    Object.assign(treeItem,{
         name: itemName,
         path: absolutePath,
         contents: contentsString,
         extension: ext(absolutePath),
-        imports: await moduleDefinitions
-    };
+        imports: moduleDefinitions
+    });
 
-    treeDataProvider.writeToCache(treeItem);
+    treeDataProvider.setItem(treeItem);
     return treeItem;
 }
 /**
