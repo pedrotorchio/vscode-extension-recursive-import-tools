@@ -1,7 +1,8 @@
 /**
+ * @import { GlobalPath } from '../path/Path.js';
  * @typedef {{
  *      name: string,
- *      path: string,
+ *      path: GlobalPath,
  *      contents: string,
  *      extension: string,
  *      imports: ModuleDefinition[]

@@ -2,43 +2,62 @@ const vscode = require('vscode');
 /**
  * @import { ModuleDefinition } from './ModuleDefinition';
  * @import { TreeDataProvider } from 'vscode';
+ * @import { GlobalPath } from '../path/Path';
  * @class @implements {TreeDataProvider<ModuleDefinition>}
  */
 class ImportTreeDataProvider {
     constructor() {
         /** @type {ModuleDefinition[]} */
         this.tree = [];
-        /** @type {Map<string, ModuleDefinition>} */
-        this.importCache = new Map();
+        this.cache = new ModuleCache();
+
         this._onDidChangeTreeData = new vscode.EventEmitter();
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
     }
 
     /**
-     * @param {Partial<ModuleDefinition>} module
-     * @returns {ModuleDefinition} a new reference to the module object
+     * 
+     * @param {GlobalPath} path 
+     * @returns {ModuleDefinition}
      */
-    setItem(module) {
+    createItem(path) {
+        const item = this.cache.get(path);
+        if (item) return item;
+
         /**@type {ModuleDefinition}*/
-        const completeModule = Object.assign({
-            path: module.path,
-            name: '',
-            contents: '',
-            extension: '',
+        const newItem = {
+            path,
+            name: '<undefined>',
             imports: [],
-        }, module);
-        this.importCache.set(module.path.valueOf(), completeModule);
-        return completeModule;
-    }
-    /**
-     * @param {string} path
-     * @returns {ModuleDefinition|null}
-     */
-    getItem(path) {
-        return this.importCache.get(path.valueOf()) ?? null;
+            contents: '<undefined>',
+            extension: '<undefined>'
+        }
+        this.cache.set(path, newItem);
+        return newItem;
     }
 
-    setTree(/**@type {ModuleDefinition[]} */ tree) {
+    /**
+     * @param {ModuleDefinition} item
+     */
+    setItem(item) {
+        this.cache.set(item.path, item);
+    }
+
+    /**
+     *
+     * @param {GlobalPath} path
+     * @returns {ModuleDefinition | null}
+     */
+    getItem(path) {
+        if (this.cache.has(path)) {
+            return this.cache.get(path);
+        }
+        return null;
+    }
+    /**
+     * @param {ModuleDefinition[]} tree
+     */
+    setTree(tree) {
         this.tree = tree;
         this._onDidChangeTreeData.fire();
     }
@@ -46,7 +65,12 @@ class ImportTreeDataProvider {
     getTreeItem(/**@type {ModuleDefinition} */ element) {
         return {
             label: element.name.valueOf(),
-            collapsibleState: element.imports.length > 0 ? 1 : 0
+            collapsibleState: element.imports.length > 0 ? 1 : 0,
+            command: {
+                command: 'import-recursive-search.import-tree-open-file',
+                title: 'Open file',
+                arguments: [element]
+            }
         };
     }
     getChildren(/**@type {ModuleDefinition}*/element) {
@@ -54,5 +78,42 @@ class ImportTreeDataProvider {
         return element.imports;
     }
 }
+/**
+ * Cache for module definitions. Has methods get, set and clear
+ */
+class ModuleCache {
+    constructor() {
+        /** @type {Map<string, ModuleDefinition>} */
+        this.cache = new Map();
+    }
+    /**
+     * @param {GlobalPath} path
+     * @returns {ModuleDefinition|null}
+     */
+    get(path) {
+        return this.cache.get(path.valueOf()) ?? null;
+    }
+    /**
+     * @param {GlobalPath} path
+     * @param {ModuleDefinition} module
+     */
+    set(path, module) {
+        this.cache.set(path.valueOf(), module);
+    }
+    /**
+     * Clears the cache
+     */
+    clear() {
+        this.cache.clear();
+    }
+    /**
+     * @param {GlobalPath} path
+     * @returns {boolean}
+     */ 
+    has(path) {
+        return this.cache.has(path.valueOf());
+    }
+}
+    
 
 module.exports = ImportTreeDataProvider;

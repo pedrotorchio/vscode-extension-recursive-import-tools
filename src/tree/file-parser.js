@@ -31,17 +31,16 @@ const context = {
 async function parseFile({ absolutePath,  workspaceMap, treeDataProvider }) {
     if (treeDataProvider.getItem(absolutePath)) {
         console.log(`File already parsed: ${absolutePath}`);
-        return null;
-        // return treeDataProvider.readFromCache(absolutePath);
+        return treeDataProvider.getItem(absolutePath);
     }
-    
-    const treeItem = treeDataProvider.setItem({ name: absolutePath, path: absolutePath });
     
     context.recursingCount++;
     console.log(`Parsing file: ${absolutePath} (${context.recursingCount})`);
     if (context.recursingCount > 200) console.warn(`Recursive parsing passed 200 iterations.`);
     if (context.recursingCount > 1000) throw new Error(`Recursive parsing passed 1000 iterations.`);
     
+    const treeItem = treeDataProvider.createItem(absolutePath);
+
     const basePath = Global(path.dirname(absolutePath.valueOf()));
     const contentsBytes = await vscode.workspace.fs.readFile(vscode.Uri.file(absolutePath));
     const contentsString = Buffer.from(contentsBytes).toString('utf8');

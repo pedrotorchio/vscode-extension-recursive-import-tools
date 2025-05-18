@@ -5,6 +5,7 @@ const { Global } = require('./src/path/Path');
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
 const { searchImportsRecursively } = require('./src/commands/search-imports-recursively');
+const { openFile } = require('./src/commands/open-file');
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -20,8 +21,9 @@ function activate(context) {
 	const importsTree = searchImportsRecursively(importTreeDataProvider, workspacePackages);
 	vscode.window.registerTreeDataProvider('imports-tree', importTreeDataProvider);
 	
-	const disposable = vscode.commands.registerCommand('import-recursive-search.search', importsTree.execute);
-	context.subscriptions.push(disposable, importsTree);
+	const searchDisposable = vscode.commands.registerCommand('import-recursive-search.search', importsTree.execute);
+	const onClickDisposable = vscode.commands.registerCommand('import-recursive-search.import-tree-open-file', openFile);
+	context.subscriptions.push(searchDisposable, importsTree, onClickDisposable);
 }
 
 // This method is called when your extension is deactivated
