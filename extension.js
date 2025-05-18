@@ -16,17 +16,30 @@ const { openFile } = require('./src/commands/open-file');
 function activate(context) {	
 	const rootPath = Global(vscode.workspace.workspaceFolders[0].uri.fsPath);
 	const workspacePackages = getWorkspaceMap(rootPath);
-
+	
 	const importTreeDataProvider = new ImportTreeDataProvider();
-	const importsTree = searchImportsRecursively(importTreeDataProvider, workspacePackages);
-	vscode.window.registerTreeDataProvider('imports-tree', importTreeDataProvider);
+	const updateImportTree = () => searchImportsRecursively(importTreeDataProvider, workspacePackages);
 	
-    const onChangeOpenFilesListener = vscode.window.onDidChangeVisibleTextEditors(importsTree.execute);
+	const treeViewDisposable = (function setupTreeView() {
+		const treeViewDisposable = vscode.window.registerTreeDataProvider('imports-tree', importTreeDataProvider);
+
+		const onChangeOpenFilesListener = vscode.window.onDidChangeVisibleTextEditors(updateImportTree);
+		const searchDisposable = vscode.commands.registerCommand('import-recursive-search.search', updateImportTree);
+		const onClickDisposable = vscode.commands.registerCommand('import-recursive-search.import-tree-open-file', openFile);
 	
-	const searchDisposable = vscode.commands.registerCommand('import-recursive-search.search', importsTree.execute);
-	const onClickDisposable = vscode.commands.registerCommand('import-recursive-search.import-tree-open-file', openFile);
+		return {
+			dispose: () => {
+				searchDisposable.dispose();
+				onChangeOpenFilesListener.dispose();
+				treeViewDisposable.dispose();
+				onClickDisposable.dispose();
+			}
+		}
+	})();
 	
-	context.subscriptions.push(searchDisposable, onChangeOpenFilesListener, onClickDisposable);
+	context.subscriptions.push(treeViewDisposable);
+
+	updateImportTree();
 }
 
 // This method is called when your extension is deactivated

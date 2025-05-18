@@ -1,34 +1,18 @@
 /**
- * @import { Disposable } from 'vscode';
  * @import ImportTreeDataProvider from '../tree/TreeDataProvider';
  * @import { WorkspaceMap } from '../package/utils';
  */
 const vscode = require('vscode');
 const { Global } = require('../path/Path');
 const { parseFile } = require('../tree/file-parser');
-/**
- * @param {ImportTreeDataProvider} dataProvider
- * @param {WorkspaceMap} workspaceMap
- * @returns {{ execute: () => Promise<void> }}
- */
-module.exports.searchImportsRecursively = (dataProvider, workspaceMap) => {
-
-    const buildFileTree = buildFileTreeAndUpdateDataProvider(dataProvider, workspaceMap);
-
-    buildFileTree();
-    
-    return {
-        execute: buildFileTree,
-    };
-};
 
 /**
  * Builds the file tree and updates the data provider.
  * @param {ImportTreeDataProvider} dataProvider
  * @param {WorkspaceMap} workspaceMap
- * @returns {() => Promise<void>}
+ * @returns {Promise<void>}
  */
-const buildFileTreeAndUpdateDataProvider = (dataProvider, workspaceMap) => async () => {
+module.exports.searchImportsRecursively = async (dataProvider, workspaceMap) => {
     const entriesAsync = vscode.window.visibleTextEditors.map(editor => parseFile({
         absolutePath: Global(editor.document.uri.fsPath), 
         treeDataProvider: dataProvider, 
