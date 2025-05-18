@@ -21,9 +21,12 @@ function activate(context) {
 	const importsTree = searchImportsRecursively(importTreeDataProvider, workspacePackages);
 	vscode.window.registerTreeDataProvider('imports-tree', importTreeDataProvider);
 	
+    const onChangeOpenFilesListener = vscode.window.onDidChangeVisibleTextEditors(importsTree.execute);
+	
 	const searchDisposable = vscode.commands.registerCommand('import-recursive-search.search', importsTree.execute);
 	const onClickDisposable = vscode.commands.registerCommand('import-recursive-search.import-tree-open-file', openFile);
-	context.subscriptions.push(searchDisposable, importsTree, onClickDisposable);
+	
+	context.subscriptions.push(searchDisposable, onChangeOpenFilesListener, onClickDisposable);
 }
 
 // This method is called when your extension is deactivated
