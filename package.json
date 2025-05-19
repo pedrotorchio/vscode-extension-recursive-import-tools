@@ -1,6 +1,6 @@
 {
-  "name": "import-recursive-search",
-  "displayName": "Import recursive search",
+  "name": "@pedrotorchio/import-recursive-tools",
+  "displayName": "Import recursive tools",
   "description": "",
   "version": "0.0.1",
   "engines": {
