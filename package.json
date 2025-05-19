@@ -14,15 +14,22 @@
   "contributes": {
     "viewsWelcome": [
       {
-        "view": "imports-tree",
+        "view": "imports_tree",
         "contents": "No file selected. Please select a file to see its imports."
       }
     ],
     "views": {
       "explorer": [
         {
-          "id": "imports-tree",
+          "id": "imports_tree",
           "name": "Imports tree"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "nodeDependencies.editEntry",
+          "when": "view == imports_tree",
+          "group": "inline"
         }
       ]
     },
@@ -33,7 +40,7 @@
       }
     ],
     "activationEvents": [
-      "onView:imports-tree"
+      "onView:imports_tree"
     ]
   },
   "scripts": {
