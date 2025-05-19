@@ -1,6 +1,6 @@
 {
-  "name": "@pedrotorchio/import-recursive-tools",
-  "displayName": "Import recursive tools",
+  "name": "@pedrotorchio/recursive-import-tools",
+  "displayName": "Recursive import tools",
   "description": "",
   "version": "0.0.1",
   "engines": {
@@ -28,11 +28,11 @@
     },
     "commands": [
       {
-        "command": "import-recursive-search.update-tree",
+        "command": "recursive-import-tools.update-tree",
         "title": "Import tree: Update with currently visible files"
       },
       {
-        "command": "import-recursive-search.edit-item-label",
+        "command": "recursive-import-tools.edit-item-label",
         "title": "Edit item label",
         "icon": "$(edit)"
       }
@@ -40,13 +40,13 @@
     "menus": {
       "commandPalette": [
         {
-          "command": "import-recursive-search.edit-item-label",
+          "command": "recursive-import-tools.edit-item-label",
           "when": "false"
         }
       ],
       "view/item/context": [
         {
-          "command": "import-recursive-search.edit-item-label",
+          "command": "recursive-import-tools.edit-item-label",
           "when": "view == imports_tree",
           "group": "inline"
         }

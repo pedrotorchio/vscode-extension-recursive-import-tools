@@ -1,6 +1,6 @@
-# import-recursive-search README
+# recursive-import-tools README
 
-This is the README for your extension "import-recursive-search". After writing up a brief description, we recommend including the following sections.
+This is the README for your extension "recursive-import-tools". After writing up a brief description, we recommend including the following sections.
 
 ## Features
 

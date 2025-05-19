@@ -73,7 +73,7 @@ class ImportTreeDataProvider {
             label: element.label ?? element.name.valueOf(),
             collapsibleState: element.imports.length > 0 ? 1 : 0,
             command: {
-                command: 'import-recursive-search.import-tree-open-file',
+                command: 'recursive-import-tools.import-tree-open-file',
                 title: 'Open file',
                 arguments: [element]
             }
