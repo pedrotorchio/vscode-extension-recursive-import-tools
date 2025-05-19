@@ -18,28 +18,23 @@ function activate(context) {
 	const workspacePackages = getWorkspaceMap(rootPath);
 	
 	const importTreeDataProvider = new ImportTreeDataProvider();
-	const updateImportTree = () => searchImportsRecursively(importTreeDataProvider, workspacePackages);
 	
-	const treeViewDisposable = (function setupTreeView() {
+	const treeViewModule = (function setupTreeView() {
+		
 		const treeViewDisposable = vscode.window.registerTreeDataProvider('imports-tree', importTreeDataProvider);
-
-		const onChangeOpenFilesListener = vscode.window.onDidChangeVisibleTextEditors(updateImportTree);
-		const searchDisposable = vscode.commands.registerCommand('import-recursive-search.search', updateImportTree);
+		const searchDisposable = vscode.commands.registerCommand('import-recursive-search.search', () => searchImportsRecursively(importTreeDataProvider, workspacePackages));
 		const onClickDisposable = vscode.commands.registerCommand('import-recursive-search.import-tree-open-file', openFile);
-	
+		
 		return {
 			dispose: () => {
 				searchDisposable.dispose();
-				onChangeOpenFilesListener.dispose();
 				treeViewDisposable.dispose();
 				onClickDisposable.dispose();
 			}
 		}
 	})();
 	
-	context.subscriptions.push(treeViewDisposable);
-
-	updateImportTree();
+	context.subscriptions.push(treeViewModule);
 }
 
 // This method is called when your extension is deactivated

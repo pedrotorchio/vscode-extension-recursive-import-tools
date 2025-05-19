@@ -5,5 +5,7 @@ const vscode = require('vscode');
  */
 module.exports.openFile = async (moduleDefinition) => {
     const doc = await vscode.workspace.openTextDocument(moduleDefinition.path.valueOf());
-    await vscode.window.showTextDocument(doc);
+    await vscode.window.showTextDocument(doc, {
+        preview: false
+    });
 }

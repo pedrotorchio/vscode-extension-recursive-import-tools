@@ -29,7 +29,7 @@
     "commands": [
       {
         "command": "import-recursive-search.search",
-        "title": "Search imports recursively"
+        "title": "Update imports tree with currently visible files"
       }
     ],
     "activationEvents": [
