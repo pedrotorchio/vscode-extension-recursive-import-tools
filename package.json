@@ -28,11 +28,11 @@
     },
     "commands": [
       {
-        "command": "import-recursive-search.update_tree",
+        "command": "import-recursive-search.update-tree",
         "title": "Import tree: Update with currently visible files"
       },
       {
-        "command": "import-recursive-search.edit_item_label",
+        "command": "import-recursive-search.edit-item-label",
         "title": "Edit item label",
         "icon": "$(edit)"
       }
@@ -40,13 +40,13 @@
     "menus": {
       "commandPalette": [
         {
-          "command": "import-recursive-search.edit_item_label",
+          "command": "import-recursive-search.edit-item-label",
           "when": "false"
         }
       ],
       "view/item/context": [
         {
-          "command": "import-recursive-search.edit_item_label",
+          "command": "import-recursive-search.edit-item-label",
           "when": "view == imports_tree",
           "group": "inline"
         }

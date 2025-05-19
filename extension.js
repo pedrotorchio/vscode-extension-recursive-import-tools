@@ -22,14 +22,15 @@ function activate(context) {
 	const treeViewModule = (function setupTreeView() {
 		
 		const treeViewDisposable = vscode.window.registerTreeDataProvider('imports_tree', importTreeDataProvider);
-		const searchDisposable = vscode.commands.registerCommand('import-recursive-search.update_tree', () => searchImportsRecursively(importTreeDataProvider, workspacePackages));
+		const searchDisposable = vscode.commands.registerCommand('import-recursive-search.update-tree', () => searchImportsRecursively(importTreeDataProvider, workspacePackages));
 		const onClickDisposable = vscode.commands.registerCommand('import-recursive-search.import-tree-open-file', openFile);
-		
+		const editLabelDisposable = vscode.commands.registerCommand('import-recursive-search.edit-item-label', (moduleDefinition) => vscode.window.showInputBox().then(moduleDefinition.setLabel));
 		return {
 			dispose: () => {
 				searchDisposable.dispose();
 				treeViewDisposable.dispose();
 				onClickDisposable.dispose();
+				editLabelDisposable.dispose();
 			}
 		}
 	})();
