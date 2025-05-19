@@ -24,21 +24,34 @@
           "id": "imports_tree",
           "name": "Imports tree"
         }
-      ],
-      "view/item/context": [
-        {
-          "command": "import-recursive-search.update_tree",
-          "when": "view == imports_tree",
-          "group": "inline"
-        }
       ]
     },
     "commands": [
       {
         "command": "import-recursive-search.update_tree",
-        "title": "Update imports tree with currently visible files"
+        "title": "Import tree: Update with currently visible files"
+      },
+      {
+        "command": "import-recursive-search.edit_item_label",
+        "title": "Edit item label",
+        "icon": "$(edit)"
       }
     ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "import-recursive-search.edit_item_label",
+          "when": "false"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "import-recursive-search.edit_item_label",
+          "when": "view == imports_tree",
+          "group": "inline"
+        }
+      ]
+    },
     "activationEvents": [
       "onView:imports_tree"
     ]
