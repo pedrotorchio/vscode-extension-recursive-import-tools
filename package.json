@@ -27,7 +27,7 @@
       ],
       "view/item/context": [
         {
-          "command": "nodeDependencies.editEntry",
+          "command": "import-recursive-search.update_tree",
           "when": "view == imports_tree",
           "group": "inline"
         }
