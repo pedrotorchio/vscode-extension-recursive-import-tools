@@ -35,7 +35,7 @@
     },
     "commands": [
       {
-        "command": "import-recursive-search.search",
+        "command": "import-recursive-search.update_tree",
         "title": "Update imports tree with currently visible files"
       }
     ],
