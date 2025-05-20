@@ -1,8 +1,8 @@
 /**
- * @import { GlobalPath } from '../common/path/Path.js';
+ * @import { GlobalPath, LibraryImportPath } from '../common/path/Path.js';
  * @typedef {{
  *      label: string | null,
- *      name: string,
+ *      name: LibraryImportPath,
  *      path: GlobalPath,
  *      contents: string,
  *      extension: string,

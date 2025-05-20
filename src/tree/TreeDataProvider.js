@@ -1,16 +1,17 @@
 const vscode = require('vscode');
-const ModuleCache = require('./ModuleCache');
 /**
  * @import { ModuleDefinition } from './ModuleDefinition';
  * @import { TreeDataProvider } from 'vscode';
  * @import { GlobalPath } from '../common/path/Path';
+ * @import ModuleCache from './ModuleCache';
  * @class @implements {TreeDataProvider<ModuleDefinition>}
  */
 class ImportTreeDataProvider {
-    constructor() {
+    /** @param {ModuleCache} cache */
+    constructor(cache) {
+        this.cache = cache;
         /** @type {ModuleDefinition[]} */
         this.tree = [];
-        this.cache = new ModuleCache();
 
         this._onDidChangeTreeData = new vscode.EventEmitter();
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
@@ -25,21 +26,19 @@ class ImportTreeDataProvider {
         const item = this.cache.get(path);
         if (item) return item;
 
-        /**@type {ModuleDefinition}*/
+        /**@type {Partial<ModuleDefinition>}*/
         const newItem = {
             path,
-            name: '<undefined>',
             imports: [],
-            contents: '<undefined>',
-            extension: '<undefined>',
-            label: null,
             setLabel: (label) => {
                 newItem.label = label;
                 this._onDidChangeTreeData.fire();
             },
         }
-        this.cache.set(path, newItem);
-        return newItem;
+        const typedItem = /** @type {ModuleDefinition} */(newItem);
+
+        this.cache.set(path, typedItem);
+        return typedItem;
     }
 
     /**
