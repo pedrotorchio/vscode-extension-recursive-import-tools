@@ -23,7 +23,7 @@ function activate(context) {
 
 	const moduleCache = new ModuleCache();
 	const labels = new Labels(context);
-	const importTreeDataProvider = new ImportTreeDataProvider(moduleCache);
+	const importTreeDataProvider = new ImportTreeDataProvider({ cache: moduleCache, labels });
 
 	const treeViewModule = (function setupTreeView() {
 
@@ -46,6 +46,7 @@ function activate(context) {
 		}
 	})();
 
+	labels.refresh();
 	context.subscriptions.push(treeViewModule);
 }
 

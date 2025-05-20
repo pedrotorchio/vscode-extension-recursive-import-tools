@@ -4,12 +4,14 @@ const vscode = require('vscode');
  * @import { TreeDataProvider } from 'vscode';
  * @import { GlobalPath } from '../common/path/Path';
  * @import ModuleCache from './ModuleCache';
+ * @import Labels from '../common/path/Labels';
  * @class @implements {TreeDataProvider<ModuleDefinition>}
  */
 class ImportTreeDataProvider {
-    /** @param {ModuleCache} cache */
-    constructor(cache) {
+    /** @param {{ cache: ModuleCache, labels: Labels }} dependencies */
+    constructor({ cache, labels }) {
         this.cache = cache;
+        this.labels = labels;
         /** @type {ModuleDefinition[]} */
         this.tree = [];
 
@@ -31,7 +33,7 @@ class ImportTreeDataProvider {
             path,
             imports: [],
             setLabel: (label) => {
-                newItem.label = label;
+                this.labels.set(newItem.name, label);
                 this._onDidChangeTreeData.fire();
             },
         }
@@ -69,7 +71,7 @@ class ImportTreeDataProvider {
 
     getTreeItem(/**@type {ModuleDefinition} */ element) {
         return {
-            label: element.label ?? element.name.valueOf(),
+            label: this.labels.get(element.name) ?? element.name.valueOf(),
             collapsibleState: element.imports.length > 0 ? 1 : 0,
             command: {
                 command: 'recursive-import-tools.import-tree-open-file',

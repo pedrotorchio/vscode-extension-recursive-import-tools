@@ -12,8 +12,15 @@ module.exports = class Labels {
         this.cache = new Map();
     }
 
-    async refresh() {
+    refresh() {
         this.cache.clear();
+        this.context.workspaceState
+            .keys()
+            .filter((key) => key.startsWith(Labels.KEY_LABEL_PREFIX))
+            .forEach((key) => {
+                const label = this.context.workspaceState.get(key);
+                this.cache.set(key, label);
+            });
     }
 
     /**
