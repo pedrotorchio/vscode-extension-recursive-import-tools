@@ -1,8 +1,8 @@
-const { findNearestPackageJson } = require('../package/utils');
+const { findNearestPackageJson } = require('../common/package/utils');
 /**
- * @import { GlobalPath, LibraryImportPath, RelativeImportPath } from '../path/Path';
+ * @import { GlobalPath, LibraryImportPath, RelativeImportPath } from '../common/path/Path';
  * @import { ModuleDefinition } from '../tree/ModuleDefinition';
- * @import { WorkspaceMap } from '../package/utils';
+ * @import { WorkspaceMap } from '../common/package/utils';
  * @import ImportTreeDataProvider from '../tree/TreeDataProvider';
  */
 const fs = require('fs');
@@ -11,8 +11,8 @@ const vscode = require('vscode');
 
 const { TypescriptParser } = require('typescript-parser');
 
-const { Global, Relative, Library } = require('../path/Path');
-const { concat, resolve, join, ext } = require('../path/utils');
+const { Global, Relative, Library } = require('../common/path/Path');
+const { concat, resolve, join, ext } = require('../common/path/utils');
 
 const typescriptParser = new TypescriptParser();
 const supportedExtensions = ['.ts', '.tsx', '.js', '.jsx'];

@@ -1,6 +1,6 @@
 /**
  * @import { ModuleDefinition } from './ModuleDefinition';
- * @import { GlobalPath } from '../path/Path';
+ * @import { GlobalPath } from '../common/path/Path';
  */
 /**
  * Cache for module definitions. Has methods get, set and clear

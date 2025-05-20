@@ -1,6 +1,6 @@
-const { getWorkspaceMap } = require('./src/package/utils');
+const { getWorkspaceMap } = require('./src/common/package/utils');
 const ImportTreeDataProvider = require('./src/tree/TreeDataProvider');
-const { Global } = require('./src/path/Path');
+const { Global } = require('./src/common/path/Path');
 
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');

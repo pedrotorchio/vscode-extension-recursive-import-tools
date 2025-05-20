@@ -1,5 +1,5 @@
 /**
- * @import { GlobalPath } from '../path/Path.js';
+ * @import { GlobalPath } from '../common/path/Path.js';
  * @typedef {{
  *      label: string | null,
  *      name: string,

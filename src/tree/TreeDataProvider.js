@@ -3,7 +3,7 @@ const ModuleCache = require('./ModuleCache');
 /**
  * @import { ModuleDefinition } from './ModuleDefinition';
  * @import { TreeDataProvider } from 'vscode';
- * @import { GlobalPath } from '../path/Path';
+ * @import { GlobalPath } from '../common/path/Path';
  * @class @implements {TreeDataProvider<ModuleDefinition>}
  */
 class ImportTreeDataProvider {

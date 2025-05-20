@@ -1,9 +1,9 @@
 /**
  * @import ImportTreeDataProvider from '../tree/TreeDataProvider';
- * @import { WorkspaceMap } from '../package/utils';
+ * @import { WorkspaceMap } from '../common/package/utils';
  */
 const vscode = require('vscode');
-const { Global } = require('../path/Path');
+const { Global } = require('../common/path/Path');
 const { parseFile } = require('../tree/file-parser');
 
 /**
