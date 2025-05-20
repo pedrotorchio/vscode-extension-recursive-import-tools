@@ -4,8 +4,9 @@ const { Global } = require('./src/path/Path');
 
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
-const { searchImportsRecursively } = require('./src/commands/search-imports-recursively');
-const { openFile } = require('./src/commands/open-file');
+const DownstreamTreeRefreshCommand = require('./src/commands/DownstreamTreeRefreshCommand');
+const OpenFileCommand = require('./src/commands/OpenFileCommand');
+const EditItemLabelCommand = require('./src/commands/EditItemLabelCommand');
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -20,11 +21,16 @@ function activate(context) {
 	const importTreeDataProvider = new ImportTreeDataProvider();
 	
 	const treeViewModule = (function setupTreeView() {
+
+		const openFileCommand = new OpenFileCommand();
+		const editItemLabelCommand = new EditItemLabelCommand();
+		const downstreamTreeRefreshCommand = new DownstreamTreeRefreshCommand(importTreeDataProvider, workspacePackages);
 		
 		const treeViewDisposable = vscode.window.registerTreeDataProvider('imports_tree', importTreeDataProvider);
-		const searchDisposable = vscode.commands.registerCommand('recursive-import-tools.update-tree', () => searchImportsRecursively(importTreeDataProvider, workspacePackages));
-		const onClickDisposable = vscode.commands.registerCommand('recursive-import-tools.import-tree-open-file', openFile);
-		const editLabelDisposable = vscode.commands.registerCommand('recursive-import-tools.edit-item-label', (moduleDefinition) => vscode.window.showInputBox().then(moduleDefinition.setLabel));
+		const searchDisposable = vscode.commands.registerCommand('recursive-import-tools.update-tree', () => downstreamTreeRefreshCommand.execute());
+		const onClickDisposable = vscode.commands.registerCommand('recursive-import-tools.import-tree-open-file', (module) => openFileCommand.execute(module));
+		const editLabelDisposable = vscode.commands.registerCommand('recursive-import-tools.edit-item-label', (module) => editItemLabelCommand.execute(module));
+		
 		return {
 			dispose: () => {
 				searchDisposable.dispose();
