@@ -5,7 +5,16 @@
  *      path: GlobalPath,
  *      contents: string,
  *      extension: string,
- *      imports: ModuleDefinition[],
  *      setLabel: (label: string) => void,
- * }} ModuleDefinition;
+ * }} _CommonModuleDefinitionFields
+ * @typedef {_CommonModuleDefinitionFields & {
+ *      imports: ModuleDefinition[],
+ *      hasResolvedImports: true
+ * }} ModuleDefinitionWithResolvedModules
+ * @typedef {_CommonModuleDefinitionFields & {
+ *     imports: GlobalPath[],
+ *     hasResolvedImports: false
+ * }} ModuleDefinitionWithUnresolvedModules
+ *
+ * @typedef{ ModuleDefinitionWithResolvedModules | ModuleDefinitionWithUnresolvedModules } ModuleDefinition
  */

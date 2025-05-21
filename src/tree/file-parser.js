@@ -25,20 +25,21 @@ const context = {
  *  absolutePath: GlobalPath,
  *  workspaceMap: WorkspaceMap
  *  treeDataProvider: ImportTreeDataProvider
+ *  depth?: number
  * }} args
  * @returns {Promise<ModuleDefinition | null>}
  */
-async function parseFile({ absolutePath,  workspaceMap, treeDataProvider }) {
+async function parseFile({ absolutePath, workspaceMap, treeDataProvider, depth }) {
     if (treeDataProvider.getItem(absolutePath)) {
         console.log(`File already parsed: ${absolutePath}`);
         return treeDataProvider.getItem(absolutePath);
     }
-    
+
     context.recursingCount++;
     console.log(`Parsing file: ${absolutePath} (${context.recursingCount})`);
     if (context.recursingCount > 200) console.warn(`Recursive parsing passed 200 iterations.`);
     if (context.recursingCount > 1000) throw new Error(`Recursive parsing passed 1000 iterations.`);
-    
+
     const treeItem = treeDataProvider.createItem(absolutePath);
 
     const basePath = Global(path.dirname(absolutePath.valueOf()));
@@ -47,49 +48,71 @@ async function parseFile({ absolutePath,  workspaceMap, treeDataProvider }) {
     const parsedFile = await typescriptParser.parseSource(contentsString);
 
     /**
-     * Converts an import to a module definition.
-     * @param {{ libraryName: string }} param0
-     * @returns {Promise<ModuleDefinition | null>}
+     * @param {{
+     *  libraryName: string,
+     * }} args
+     * @returns {GlobalPath | null}
      */
-    const importToModuleDefinition = ({ libraryName }) => {
+    const resolveModuleCompletePath = ({ libraryName }) => {
         if (path.isAbsolute(libraryName)) return null;
         const isRelativePath = libraryName.startsWith('.');
         const workspacePackageAbsolutePath = findWorkspacePackage(libraryName, workspaceMap);
         if (!isRelativePath && !workspacePackageAbsolutePath) return null;
 
-        const absoluteImportPath = isRelativePath 
+        const absoluteImportPath = isRelativePath
             ? resolve(basePath, libraryName)
             : workspacePackageAbsolutePath;
 
         const completeAbsolutePath = ensureFilepathWithExtension(absoluteImportPath);
         if (!completeAbsolutePath) return null;
 
+        return completeAbsolutePath;
+    }
+    /**
+     * Converts an import to a module definition.
+     * @param {{ libraryName: string }} library
+     * @returns {Promise<ModuleDefinition> | null}
+     */
+    const resolveModuleDefinition = (library) => {
+        const completeAbsolutePath = resolveModuleCompletePath(library);
+        if (!completeAbsolutePath) return null;
+
         try {
-            return parseFile({ absolutePath: completeAbsolutePath, workspaceMap, treeDataProvider});
+            return parseFile({ absolutePath: completeAbsolutePath, workspaceMap, treeDataProvider, depth: depth && depth - 1 });
         } catch (e) {
             console.error(`Error parsing file ${completeAbsolutePath}: ${e.message}`);
             return null;
         }
     };
 
-    const moduleDefinitionPromises = parsedFile.imports.map(importToModuleDefinition);
-    const moduleDefinitionsUnfiltered = await Promise.all(moduleDefinitionPromises);
-    const moduleDefinitions = moduleDefinitionsUnfiltered.filter(Boolean);
-    const { path: packagePath, package: packageJson } = findNearestPackageJson(absolutePath);
-    const relativePath = Relative(path.relative(path.dirname(packagePath.valueOf()), absolutePath.valueOf()));
-    const itemName = join(Library(packageJson.name), relativePath);
+    const resolveImportName = () => {
+        const { path: packagePath, package: packageJson } = findNearestPackageJson(absolutePath);
+        const relativePath = Relative(path.relative(path.dirname(packagePath.valueOf()), absolutePath.valueOf()));
+        const itemName = join(Library(packageJson.name), relativePath);
+        return itemName;
+    }
 
-    Object.assign(treeItem,{
-        name: itemName,
+    const shouldResolveImports = depth === undefined || depth > 0;
+    /** @type {ModuleDefinition[] | GlobalPath[]} */
+    const resolvedImportsUnfiltered = shouldResolveImports
+        ? await Promise.all(parsedFile.imports.map(resolveModuleDefinition))
+        : parsedFile.imports.map(resolveModuleCompletePath);
+
+    const imports = resolvedImportsUnfiltered.filter(Boolean);
+
+    Object.assign(treeItem, {
+        name: resolveImportName(),
         path: absolutePath,
         contents: contentsString,
         extension: ext(absolutePath),
-        imports: moduleDefinitions
+        imports: imports,
+        hasResolvedImports: shouldResolveImports,
     });
 
     treeDataProvider.setItem(treeItem);
     return treeItem;
 }
+
 /**
  *
  * @param {string} importedPath
@@ -97,23 +120,23 @@ async function parseFile({ absolutePath,  workspaceMap, treeDataProvider }) {
  * @returns {GlobalPath | null}
  */
 const findWorkspacePackage = (importedPath, workspaceMap) => {
-        const packageNameSeparated = importedPath.split('/');
-        const packageNameWithoutScope = packageNameSeparated[0];
-        if (workspaceMap.has(packageNameWithoutScope)) {
-            const packageGlobalRoot = workspaceMap.get(packageNameWithoutScope);
-            const internalPath = Relative(packageNameSeparated.slice(1).join('/'));
-            const importedGlobalPath = resolve(packageGlobalRoot, internalPath); 
-            return importedGlobalPath;
-        }
+    const packageNameSeparated = importedPath.split('/');
+    const packageNameWithoutScope = packageNameSeparated[0];
+    if (workspaceMap.has(packageNameWithoutScope)) {
+        const packageGlobalRoot = workspaceMap.get(packageNameWithoutScope);
+        const internalPath = Relative(packageNameSeparated.slice(1).join('/'));
+        const importedGlobalPath = resolve(packageGlobalRoot, internalPath);
+        return importedGlobalPath;
+    }
 
-        const packageNameWithScope = packageNameSeparated.slice(0, 2).join('/');
-        if (workspaceMap.has(packageNameWithScope)) {
-            const packageGlobalRoot = workspaceMap.get(packageNameWithScope);
-            const internalPath = Relative(packageNameSeparated.slice(2).join('/'));
-            const importedGlobalPath = resolve(packageGlobalRoot, internalPath); 
-            return importedGlobalPath;
-        }
-        return null;
+    const packageNameWithScope = packageNameSeparated.slice(0, 2).join('/');
+    if (workspaceMap.has(packageNameWithScope)) {
+        const packageGlobalRoot = workspaceMap.get(packageNameWithScope);
+        const internalPath = Relative(packageNameSeparated.slice(2).join('/'));
+        const importedGlobalPath = resolve(packageGlobalRoot, internalPath);
+        return importedGlobalPath;
+    }
+    return null;
 }
 
 /**
