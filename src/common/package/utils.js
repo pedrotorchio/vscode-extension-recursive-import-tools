@@ -6,7 +6,7 @@ const { join } = require('../path/utils');
 /**
  * @import { PackageJSON } from 'find-package-json';
  * @import { GlobalPath } from '../path/Path';
- * @typedef {Map<string, GlobalPath>} WorkspaceMap
+ * @typedef {Map<string, GlobalPath>} WorkspacePackageMap
  */
 
 /**
@@ -18,7 +18,7 @@ const { join } = require('../path/utils');
  */
 function findNearestPackageJson(globalPath) {
     const packageJsonRaw = findPackageJson(globalPath.valueOf()).next();
-    const { value:  packageJson, filename: packagePath} = packageJsonRaw;
+    const { value: packageJson, filename: packagePath } = packageJsonRaw;
 
     return {
         path: Global(packagePath),
@@ -30,12 +30,12 @@ function findNearestPackageJson(globalPath) {
  * Finds the nearest package.json file to param `startPath` which contains a workspaces key and 
  * returns a map of all packages in the workspace.
  * @param {GlobalPath} startPath
- * @returns {WorkspaceMap | null} workspaceMap
+ * @returns {WorkspacePackageMap | null} workspacePackageMap
  */
-function getWorkspaceMap(startPath) {
+function getWorkspacePackageMap(startPath) {
     // iterate package json files until finding one with "workspaces" key
     let packageWithWorkspaces = null;
-    for(const packageJson of findPackageJson(startPath.valueOf())) {
+    for (const packageJson of findPackageJson(startPath.valueOf())) {
         if (packageJson.workspaces) {
             packageWithWorkspaces = packageJson;
             break;
@@ -44,7 +44,7 @@ function getWorkspaceMap(startPath) {
     if (!packageWithWorkspaces) return null;
     const workspaceRoot = Global(path.dirname(packageWithWorkspaces.__path));
     /** @type Map<string, GlobalPath> */
-    const workspaceMap = new Map();
+    const workspacePackageMap = new Map();
     const workspacesArray = /** @type {string[]} */ (packageWithWorkspaces.workspaces);
     workspacesArray.forEach(workspaceGlob => {
         const packagesDir = join(workspaceRoot, workspaceGlob, 'package.json').valueOf();
@@ -53,13 +53,13 @@ function getWorkspaceMap(startPath) {
         });
         packages.forEach(packagePath => {
             const packageJson = require(packagePath);
-            workspaceMap.set(packageJson.name, Global(path.dirname(packagePath)));
+            workspacePackageMap.set(packageJson.name, Global(path.dirname(packagePath)));
         });
     });
-    return workspaceMap;
+    return workspacePackageMap;
 }
 
 module.exports = {
     findNearestPackageJson,
-    getWorkspaceMap
+    getWorkspaceMap: getWorkspacePackageMap
 }

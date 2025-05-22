@@ -1,6 +1,6 @@
 /**
  * @import ImportTreeDataProvider from '../tree/TreeDataProvider';
- * @import { WorkspaceMap } from '../common/package/utils';
+ * @import { WorkspacePackageMap } from '../common/package/utils';
  */
 const vscode = require('vscode');
 const { Global } = require('../common/path/Path');
@@ -9,21 +9,21 @@ const { parseFile } = require('../tree/file-parser');
 /**
  * Builds the file tree and updates the data provider.
  * @param {ImportTreeDataProvider} dataProvider
- * @param {WorkspaceMap} workspaceMap
+ * @param {WorkspacePackageMap} workspacePackageMap
  * @returns {Promise<void>}
  */
 module.exports = class DownstreamTreeRefreshCommand {
-    constructor(dataProvider, workspaceMap) {
+    constructor(dataProvider, workspacePackageMap) {
         /** @type {ImportTreeDataProvider} */
         this.dataProvider = dataProvider;
-        /** @type {WorkspaceMap} */
-        this.workspaceMap = workspaceMap;
+        /** @type {WorkspacePackageMap} */
+        this.workspacePackageMap = workspacePackageMap;
     }
     async execute() {
         const entriesAsync = vscode.window.visibleTextEditors.map(editor => parseFile({
             absolutePath: Global(editor.document.uri.fsPath),
             treeDataProvider: this.dataProvider,
-            workspaceMap: this.workspaceMap
+            workspacePackageMap: this.workspacePackageMap
         }));
         const moduleTree = await Promise.all(entriesAsync);
         this.dataProvider.setTree(moduleTree);

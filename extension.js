@@ -4,50 +4,46 @@ const { Global } = require('./src/common/path/Path');
 const Labels = require('./src/common/path/Labels');
 const ModuleCache = require('./src/tree/ModuleCache');
 
-
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
 const DownstreamTreeRefreshCommand = require('./src/commands/DownstreamTreeRefreshCommand');
 const OpenFileCommand = require('./src/commands/OpenFileCommand');
 const EditItemLabelCommand = require('./src/commands/EditItemLabelCommand');
-
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+const ExpandTreeItemCommand = require('./src/commands/ExpandTreeItemCommand');
 
 /**
- * @param {vscode.ExtensionContext} context
+ * @import { ModuleDefinition } from './src/tree/ModuleDefinition';
+ * @import { TreeView, ExtensionContext } from 'vscode';
+ */
+
+/**
+ * @param {ExtensionContext} context
  */
 function activate(context) {
 	const rootPath = Global(vscode.workspace.workspaceFolders[0].uri.fsPath);
-	const workspacePackages = getWorkspaceMap(rootPath);
+	const workspacePackageMap = getWorkspaceMap(rootPath);
 
 	const moduleCache = new ModuleCache();
 	const labels = new Labels(context);
-	const importTreeDataProvider = new ImportTreeDataProvider({ cache: moduleCache, labels });
+	const treeDataProvider = new ImportTreeDataProvider({ cache: moduleCache, labels });
+	const treeView = vscode.window.createTreeView('imports_tree', {
+		treeDataProvider: treeDataProvider,
+		showCollapseAll: true,
+	});
 
-	const treeViewModule = (function setupTreeView() {
+	const openFileCommand = new OpenFileCommand();
+	const editItemLabelCommand = new EditItemLabelCommand(labels);
+	const downstreamTreeRefreshCommand = new DownstreamTreeRefreshCommand(treeDataProvider, workspacePackageMap);
+	const expandTreeItemCommand = new ExpandTreeItemCommand({ workspacePackageMap, treeDataProvider });
 
-		const openFileCommand = new OpenFileCommand();
-		const editItemLabelCommand = new EditItemLabelCommand(labels);
-		const downstreamTreeRefreshCommand = new DownstreamTreeRefreshCommand(importTreeDataProvider, workspacePackages);
+	const searchDisposable = vscode.commands.registerCommand('recursive-import-tools.update-tree', () => downstreamTreeRefreshCommand.execute());
+	const onClickDisposable = vscode.commands.registerCommand('recursive-import-tools.import-tree-open-file', (module) => openFileCommand.execute(module));
+	const editLabelDisposable = vscode.commands.registerCommand('recursive-import-tools.edit-item-label', (module) => editItemLabelCommand.execute(module));
 
-		const treeViewDisposable = vscode.window.registerTreeDataProvider('imports_tree', importTreeDataProvider);
-		const searchDisposable = vscode.commands.registerCommand('recursive-import-tools.update-tree', () => downstreamTreeRefreshCommand.execute());
-		const onClickDisposable = vscode.commands.registerCommand('recursive-import-tools.import-tree-open-file', (module) => openFileCommand.execute(module));
-		const editLabelDisposable = vscode.commands.registerCommand('recursive-import-tools.edit-item-label', (module) => editItemLabelCommand.execute(module));
+	const onDidExpandElementDisposable = treeView.onDidExpandElement(el => expandTreeItemCommand.execute(el));
 
-		return {
-			dispose: () => {
-				searchDisposable.dispose();
-				treeViewDisposable.dispose();
-				onClickDisposable.dispose();
-				editLabelDisposable.dispose();
-			}
-		}
-	})();
-
-	labels.refresh();
-	context.subscriptions.push(treeViewModule);
+	labels.reload();
+	context.subscriptions.push(searchDisposable, onClickDisposable, editLabelDisposable, onDidExpandElementDisposable);
 }
 
 // This method is called when your extension is deactivated

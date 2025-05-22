@@ -19,6 +19,10 @@ class ImportTreeDataProvider {
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
     }
 
+    updateTree() {
+        this._onDidChangeTreeData.fire();
+    }
+
     /**
      * 
      * @param {GlobalPath} path 
@@ -34,7 +38,7 @@ class ImportTreeDataProvider {
             imports: [],
             setLabel: (label) => {
                 this.labels.set(newItem.name, label);
-                this._onDidChangeTreeData.fire();
+                this.updateTree();
             },
         }
         const typedItem = /** @type {ModuleDefinition} */(newItem);
@@ -66,7 +70,7 @@ class ImportTreeDataProvider {
      */
     setTree(tree) {
         this.tree = tree;
-        this._onDidChangeTreeData.fire();
+        this.updateTree();
     }
 
     getTreeItem(/**@type {ModuleDefinition} */ element) {
@@ -82,6 +86,7 @@ class ImportTreeDataProvider {
     }
     getChildren(/**@type {ModuleDefinition}*/element) {
         if (!element) return this.tree;
+        if (!element.hasResolvedImports) return [];
         return element.imports;
     }
 }

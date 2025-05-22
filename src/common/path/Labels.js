@@ -12,7 +12,7 @@ module.exports = class Labels {
         this.cache = new Map();
     }
 
-    refresh() {
+    reload() {
         this.cache.clear();
         this.context.workspaceState
             .keys()

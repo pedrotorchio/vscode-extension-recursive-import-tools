@@ -2,7 +2,7 @@ const { findNearestPackageJson } = require('../common/package/utils');
 /**
  * @import { GlobalPath, LibraryImportPath, RelativeImportPath } from '../common/path/Path';
  * @import { ModuleDefinition } from '../tree/ModuleDefinition';
- * @import { WorkspaceMap } from '../common/package/utils';
+ * @import { WorkspacePackageMap } from '../common/package/utils';
  * @import ImportTreeDataProvider from '../tree/TreeDataProvider';
  */
 const fs = require('fs');
@@ -23,13 +23,13 @@ const context = {
  * Parses a file and returns its module definition.
  * @param {{
  *  absolutePath: GlobalPath,
- *  workspaceMap: WorkspaceMap
+ *  workspacePackageMap: WorkspacePackageMap
  *  treeDataProvider: ImportTreeDataProvider
  *  depth?: number
  * }} args
  * @returns {Promise<ModuleDefinition | null>}
  */
-async function parseFile({ absolutePath, workspaceMap, treeDataProvider, depth }) {
+async function parseFile({ absolutePath, workspacePackageMap, treeDataProvider, depth }) {
     if (treeDataProvider.getItem(absolutePath)) {
         console.log(`File already parsed: ${absolutePath}`);
         return treeDataProvider.getItem(absolutePath);
@@ -56,7 +56,7 @@ async function parseFile({ absolutePath, workspaceMap, treeDataProvider, depth }
     const resolveModuleCompletePath = ({ libraryName }) => {
         if (path.isAbsolute(libraryName)) return null;
         const isRelativePath = libraryName.startsWith('.');
-        const workspacePackageAbsolutePath = findWorkspacePackage(libraryName, workspaceMap);
+        const workspacePackageAbsolutePath = findWorkspacePackage(libraryName, workspacePackageMap);
         if (!isRelativePath && !workspacePackageAbsolutePath) return null;
 
         const absoluteImportPath = isRelativePath
@@ -78,7 +78,7 @@ async function parseFile({ absolutePath, workspaceMap, treeDataProvider, depth }
         if (!completeAbsolutePath) return null;
 
         try {
-            return parseFile({ absolutePath: completeAbsolutePath, workspaceMap, treeDataProvider, depth: depth && depth - 1 });
+            return parseFile({ absolutePath: completeAbsolutePath, workspacePackageMap, treeDataProvider, depth: depth && depth - 1 });
         } catch (e) {
             console.error(`Error parsing file ${completeAbsolutePath}: ${e.message}`);
             return null;
@@ -116,22 +116,22 @@ async function parseFile({ absolutePath, workspaceMap, treeDataProvider, depth }
 /**
  *
  * @param {string} importedPath
- * @param {Readonly<WorkspaceMap>} workspaceMap
+ * @param {Readonly<WorkspacePackageMap>} workspacePackageMap
  * @returns {GlobalPath | null}
  */
-const findWorkspacePackage = (importedPath, workspaceMap) => {
+const findWorkspacePackage = (importedPath, workspacePackageMap) => {
     const packageNameSeparated = importedPath.split('/');
     const packageNameWithoutScope = packageNameSeparated[0];
-    if (workspaceMap.has(packageNameWithoutScope)) {
-        const packageGlobalRoot = workspaceMap.get(packageNameWithoutScope);
+    if (workspacePackageMap.has(packageNameWithoutScope)) {
+        const packageGlobalRoot = workspacePackageMap.get(packageNameWithoutScope);
         const internalPath = Relative(packageNameSeparated.slice(1).join('/'));
         const importedGlobalPath = resolve(packageGlobalRoot, internalPath);
         return importedGlobalPath;
     }
 
     const packageNameWithScope = packageNameSeparated.slice(0, 2).join('/');
-    if (workspaceMap.has(packageNameWithScope)) {
-        const packageGlobalRoot = workspaceMap.get(packageNameWithScope);
+    if (workspacePackageMap.has(packageNameWithScope)) {
+        const packageGlobalRoot = workspacePackageMap.get(packageNameWithScope);
         const internalPath = Relative(packageNameSeparated.slice(2).join('/'));
         const importedGlobalPath = resolve(packageGlobalRoot, internalPath);
         return importedGlobalPath;
