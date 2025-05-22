@@ -20,7 +20,6 @@ const context = {
     recursingCount: 0
 };
 /**
- * Parses a file and returns its module definition.
  * @param {{
  *  absolutePath: GlobalPath,
  *  workspacePackageMap: WorkspacePackageMap
@@ -29,7 +28,7 @@ const context = {
  * }} args
  * @returns {Promise<ModuleDefinition | null>}
  */
-async function parseFile({ absolutePath, workspacePackageMap, treeDataProvider, depth }) {
+async function parseFile({ absolutePath, workspacePackageMap, treeDataProvider, depth = 0 }) {
     if (treeDataProvider.getItem(absolutePath)) {
         console.log(`File already parsed: ${absolutePath}`);
         return treeDataProvider.getItem(absolutePath);
@@ -37,8 +36,6 @@ async function parseFile({ absolutePath, workspacePackageMap, treeDataProvider, 
 
     context.recursingCount++;
     console.log(`Parsing file: ${absolutePath} (${context.recursingCount})`);
-    if (context.recursingCount > 200) console.warn(`Recursive parsing passed 200 iterations.`);
-    if (context.recursingCount > 1000) throw new Error(`Recursive parsing passed 1000 iterations.`);
 
     const treeItem = treeDataProvider.createItem(absolutePath);
 
@@ -92,7 +89,7 @@ async function parseFile({ absolutePath, workspacePackageMap, treeDataProvider, 
         return itemName;
     }
 
-    const shouldResolveImports = depth === undefined || depth > 0;
+    const shouldResolveImports = depth > 0;
     /** @type {ModuleDefinition[] | GlobalPath[]} */
     const resolvedImportsUnfiltered = shouldResolveImports
         ? await Promise.all(parsedFile.imports.map(resolveModuleDefinition))
