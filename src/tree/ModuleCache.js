@@ -5,7 +5,7 @@
 /**
  * Cache for module definitions. Has methods get, set and clear
  */
-class ModuleCache {
+module.exports = class ModuleCache {
     constructor() {
         /** @type {Map<string, ModuleDefinition>} */
         this.cache = new Map();
@@ -33,10 +33,8 @@ class ModuleCache {
     /**
      * @param {GlobalPath} path
      * @returns {boolean}
-     */ 
+     */
     has(path) {
         return this.cache.has(path.valueOf());
     }
 }
-    
-module.exports = ModuleCache;
