@@ -37,8 +37,6 @@ async function parseFile({ absolutePath, workspacePackageMap, treeDataProvider, 
     context.recursingCount++;
     console.log(`Parsing file: ${absolutePath} (${context.recursingCount})`);
 
-    const treeItem = treeDataProvider.createItem(absolutePath);
-
     const basePath = Global(path.dirname(absolutePath.valueOf()));
     const contentsBytes = await vscode.workspace.fs.readFile(vscode.Uri.file(absolutePath));
     const contentsString = Buffer.from(contentsBytes).toString('utf8');
@@ -88,8 +86,22 @@ async function parseFile({ absolutePath, workspacePackageMap, treeDataProvider, 
         const itemName = join(Library(packageJson.name), relativePath);
         return itemName;
     }
-
     const shouldResolveImports = depth > 0;
+
+    // Register tree item first to avoid infinite recursion
+    const treeItem = treeDataProvider.createItem(absolutePath);
+    Object.assign(treeItem, {
+        name: resolveImportName(),
+        path: absolutePath,
+        contents: contentsString,
+        extension: ext(absolutePath),
+        imports: [],
+        hasResolvedImports: shouldResolveImports,
+    });
+
+    treeDataProvider.setItem(treeItem);
+
+    // Then recursively visit nested imports
     /** @type {ModuleDefinition[] | GlobalPath[]} */
     const resolvedImportsUnfiltered = shouldResolveImports
         ? await Promise.all(parsedFile.imports.map(resolveModuleDefinition))
@@ -97,16 +109,10 @@ async function parseFile({ absolutePath, workspacePackageMap, treeDataProvider, 
 
     const imports = resolvedImportsUnfiltered.filter(Boolean);
 
-    Object.assign(treeItem, {
-        name: resolveImportName(),
-        path: absolutePath,
-        contents: contentsString,
-        extension: ext(absolutePath),
-        imports: imports,
-        hasResolvedImports: shouldResolveImports,
-    });
-
+    // Update tree item with the resolved imports
+    Object.assign(treeItem, { imports });
     treeDataProvider.setItem(treeItem);
+
     return treeItem;
 }
 
