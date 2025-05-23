@@ -6,7 +6,7 @@ const { Global } = require('./src/common/path/Path');
 const Labels = require('./src/common/path/Labels');
 const ModuleCache = require('./src/tree/ModuleCache');
 
-const DownstreamTreeRefreshCommand = require('./src/commands/DownstreamTreeRefreshCommand');
+const GenerateDownstreamTreeCommand = require('./src/commands/GenerateDownstreamTreeCommand');
 const OpenFileCommand = require('./src/commands/OpenFileCommand');
 const EditItemLabelCommand = require('./src/commands/EditItemLabelCommand');
 const ExpandTreeItemCommand = require('./src/commands/ExpandTreeItemCommand');
@@ -33,7 +33,7 @@ function activate(context) {
 
 	const openFileCommand = new OpenFileCommand();
 	const editItemLabelCommand = new EditItemLabelCommand(labels);
-	const downstreamTreeRefreshCommand = new DownstreamTreeRefreshCommand(treeDataProvider, workspacePackageMap);
+	const downstreamTreeRefreshCommand = new GenerateDownstreamTreeCommand({ treeDataProvider, workspacePackageMap });
 	const expandTreeItemCommand = new ExpandTreeItemCommand({ workspacePackageMap, treeDataProvider });
 
 	const searchDisposable = vscode.commands.registerCommand('recursive-import-tools.update-tree', () => downstreamTreeRefreshCommand.execute());
