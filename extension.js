@@ -31,7 +31,7 @@ function activate(context) {
 	});
 
 	const openFileCommand = new OpenFileCommand();
-	const editItemLabelCommand = new EditItemLabelCommand({ labels, treeDataProvider });
+	const editItemLabelCommand = new EditItemLabelCommand({ labels, treeDataProvider, moduleCache });
 	const downstreamTreeRefreshCommand = new GenerateDownstreamTreeCommand({ treeDataProvider, workspacePackageMap, moduleCache });
 	const expandTreeItemCommand = new ExpandTreeItemCommand({ workspacePackageMap, treeDataProvider, moduleCache });
 
