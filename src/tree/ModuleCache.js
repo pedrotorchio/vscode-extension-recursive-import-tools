@@ -1,8 +1,6 @@
 /**
- * @import { ModuleDefinition } from './ModuleDefinition';
+ * @import { ModuleDefinition } from './types';
  * @import { GlobalPath } from '../common/path/Path';
- */
-/**
  * Cache for module definitions. Has methods get, set and clear
  */
 module.exports = class ModuleCache {
@@ -18,11 +16,12 @@ module.exports = class ModuleCache {
         return this.cache.get(path.valueOf()) ?? null;
     }
     /**
-     * @param {GlobalPath} path
      * @param {ModuleDefinition} module
+     * @returns {ModuleDefinition}
      */
-    set(path, module) {
-        this.cache.set(path.valueOf(), module);
+    set(module) {
+        this.cache.set(module.path.valueOf(), module);
+        return module;
     }
     /**
      * Clears the cache

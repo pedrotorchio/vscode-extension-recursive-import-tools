@@ -1,30 +1,32 @@
 /**
  * @import { TreeViewExpansionEvent } from "vscode";
- * @import { ModuleDefinition } from "../tree/ModuleDefinition";
+ * @import { GlobalPath } from "../common/path/Path";
  * @import { WorkspacePackageMap } from "../common/package/utils";
  * @import ImportTreeDataProvider from "../tree/TreeDataProvider";
+ * @import ModuleCache from "../tree/ModuleCache";
  * 
  * @typedef {{
  *    workspacePackageMap: WorkspacePackageMap,
  *    treeDataProvider: ImportTreeDataProvider
+ *    moduleCache: ModuleCache
  * }} Args
  */
-const { parseFile } = require("../tree/file-parser");
+const { parseFiles } = require("../tree/file-parser");
 module.exports = class ExpandTreeItemCommand {
     /** @param {Args} args */
-    constructor({ workspacePackageMap, treeDataProvider }) {
+    constructor({ workspacePackageMap, treeDataProvider, moduleCache }) {
         this.workspacePackageMap = workspacePackageMap;
         this.treeDataProvider = treeDataProvider;
+        this.moduleCache = moduleCache;
     }
 
-    /** @param { TreeViewExpansionEvent<ModuleDefinition> } event */
-    execute({ element }) {
-        // TODO: parse element with depth = 1
-        parseFile({
-            absolutePath: element.path,
-            treeDataProvider: this.treeDataProvider,
+    /** @param { TreeViewExpansionEvent<GlobalPath> } event */
+    async execute({ element }) {
+        const moduleDefinition = this.moduleCache.get(element);
+        await parseFiles(moduleDefinition.imports, {
+            moduleCache: this.moduleCache,
             workspacePackageMap: this.workspacePackageMap,
-            depth: 1
-        }).then(() => this.treeDataProvider.updateTree());
+        });
+        this.treeDataProvider.updateTree();
     }
 }

@@ -1,16 +1,17 @@
-const { findNearestPackageJson } = require('../common/package/utils');
 /**
- * @import { GlobalPath, LibraryImportPath, RelativeImportPath } from '../common/path/Path';
- * @import { ModuleDefinition } from '../tree/ModuleDefinition';
+ * @import { GlobalPath } from '../common/path/Path';
+ * @import { ModuleDefinition, PathTreeNode } from './types';
  * @import { WorkspacePackageMap } from '../common/package/utils';
- * @import ImportTreeDataProvider from '../tree/TreeDataProvider';
- */
+ * @import ModuleCache from '../tree/ModuleCache';
+*/
+
 const fs = require('fs');
 const path = require('path');
 const vscode = require('vscode');
 
 const { TypescriptParser } = require('typescript-parser');
 
+const { findNearestPackageJson } = require('../common/package/utils');
 const { Global, Relative, Library } = require('../common/path/Path');
 const { concat, resolve, join, ext } = require('../common/path/utils');
 
@@ -20,20 +21,22 @@ const context = {
     recursingCount: 0
 };
 /**
- * @param {{
- *  absolutePath: GlobalPath,
+ * @typedef {{
  *  workspacePackageMap: WorkspacePackageMap
- *  treeDataProvider: ImportTreeDataProvider
- *  depth?: number
- * }} args
+ *  moduleCache: ModuleCache
+ * }} Args
+ * Parses a tree of files starting from the given absolute path and resolves absolute paths nested within
+ * the file, returning a PathTreeNode object. The function will recursively parse all imports down to 'depth' and as a side effect, will store
+ * all the ModuleDefinition objects in the ModuleCache
+ * @param {GlobalPath} absolutePath
+ * @param {Args} args
  * @returns {Promise<ModuleDefinition | null>}
  */
-async function parseFile({ absolutePath, workspacePackageMap, treeDataProvider, depth = 0 }) {
-    if (treeDataProvider.getItem(absolutePath)) {
-        console.log(`File already parsed: ${absolutePath}`);
-        return treeDataProvider.getItem(absolutePath);
+async function parseFile(absolutePath, { workspacePackageMap, moduleCache }) {
+    if (moduleCache.has(absolutePath)) {
+        console.log(`Module already cached: ${absolutePath}`);
+        return moduleCache.get(absolutePath);
     }
-
     context.recursingCount++;
     console.log(`Parsing file: ${absolutePath} (${context.recursingCount})`);
 
@@ -63,22 +66,6 @@ async function parseFile({ absolutePath, workspacePackageMap, treeDataProvider, 
 
         return completeAbsolutePath;
     }
-    /**
-     * Converts an import to a module definition.
-     * @param {{ libraryName: string }} library
-     * @returns {Promise<ModuleDefinition> | null}
-     */
-    const resolveModuleDefinition = (library) => {
-        const completeAbsolutePath = resolveModuleCompletePath(library);
-        if (!completeAbsolutePath) return null;
-
-        try {
-            return parseFile({ absolutePath: completeAbsolutePath, workspacePackageMap, treeDataProvider, depth: depth && depth - 1 });
-        } catch (e) {
-            console.error(`Error parsing file ${completeAbsolutePath}: ${e.message}`);
-            return null;
-        }
-    };
 
     const resolveImportName = () => {
         const { path: packagePath, package: packageJson } = findNearestPackageJson(absolutePath);
@@ -86,34 +73,17 @@ async function parseFile({ absolutePath, workspacePackageMap, treeDataProvider, 
         const itemName = join(Library(packageJson.name), relativePath);
         return itemName;
     }
-    const shouldResolveImports = depth > 0;
-
-    // Register tree item first to avoid infinite recursion
-    const treeItem = treeDataProvider.createItem(absolutePath);
-    Object.assign(treeItem, {
-        name: resolveImportName(),
-        path: absolutePath,
-        contents: contentsString,
-        extension: ext(absolutePath),
-        imports: [],
-        hasResolvedImports: shouldResolveImports,
-    });
-
-    treeDataProvider.setItem(treeItem);
 
     // Then recursively visit nested imports
-    /** @type {ModuleDefinition[] | GlobalPath[]} */
-    const resolvedImportsUnfiltered = shouldResolveImports
-        ? await Promise.all(parsedFile.imports.map(resolveModuleDefinition))
-        : parsedFile.imports.map(resolveModuleCompletePath);
-
-    const imports = resolvedImportsUnfiltered.filter(Boolean);
-
-    // Update tree item with the resolved imports
-    Object.assign(treeItem, { imports });
-    treeDataProvider.setItem(treeItem);
-
-    return treeItem;
+    const importAbsolutePaths = parsedFile.imports.map(resolveModuleCompletePath).filter(Boolean);
+    // Register module and return it
+    return moduleCache.set({
+        path: absolutePath,
+        name: resolveImportName(),
+        contents: contentsString,
+        extension: ext(absolutePath),
+        imports: importAbsolutePaths,
+    });
 }
 
 /**
@@ -175,7 +145,10 @@ const forEachExtensionCheckExists = (pather) => {
     });
     return foundFile;
 }
-
+const parseFiles = (/**@type {GlobalPath[]}*/ filePaths, /**@type {Args}*/args) => {
+    return Promise.all(filePaths.map(path => parseFile(path, args)));
+}
 module.exports = {
     parseFile,
+    parseFiles,
 };

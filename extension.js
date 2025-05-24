@@ -12,8 +12,7 @@ const EditItemLabelCommand = require('./src/commands/EditItemLabelCommand');
 const ExpandTreeItemCommand = require('./src/commands/ExpandTreeItemCommand');
 
 /**
- * @import { ModuleDefinition } from './src/tree/ModuleDefinition';
- * @import { TreeView, ExtensionContext } from 'vscode';
+ * @import { ExtensionContext } from 'vscode';
  */
 
 /**
@@ -32,9 +31,9 @@ function activate(context) {
 	});
 
 	const openFileCommand = new OpenFileCommand();
-	const editItemLabelCommand = new EditItemLabelCommand(labels);
-	const downstreamTreeRefreshCommand = new GenerateDownstreamTreeCommand({ treeDataProvider, workspacePackageMap });
-	const expandTreeItemCommand = new ExpandTreeItemCommand({ workspacePackageMap, treeDataProvider });
+	const editItemLabelCommand = new EditItemLabelCommand({ labels, treeDataProvider });
+	const downstreamTreeRefreshCommand = new GenerateDownstreamTreeCommand({ treeDataProvider, workspacePackageMap, moduleCache });
+	const expandTreeItemCommand = new ExpandTreeItemCommand({ workspacePackageMap, treeDataProvider, moduleCache });
 
 	const searchDisposable = vscode.commands.registerCommand('recursive-import-tools.update-tree', () => downstreamTreeRefreshCommand.execute());
 	const onClickDisposable = vscode.commands.registerCommand('recursive-import-tools.import-tree-open-file', (module) => openFileCommand.execute(module));

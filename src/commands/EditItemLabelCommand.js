@@ -1,15 +1,23 @@
 const vscode = require('vscode');
 /**
- * @import { ModuleDefinition } from '../tree/ModuleDefinition';
+ * @import { ModuleDefinition } from '../tree/types';
+ * @import ImportTreeDataProvider from '../tree/TreeDataProvider';
  * @import Labels from '../common/path/Labels';
 */
+
+/**
+ * @typedef {{
+ *      labels: Labels
+ *      treeDataProvider: ImportTreeDataProvider
+ * }} Args
+ */
 module.exports = class EditItemLabelCommand {
     /**
-     * @param {Labels} labels 
+     * @param {Args} args
      */
-    constructor(labels) {
-        /** @type {Labels} */
+    constructor({ labels, treeDataProvider }) {
         this.labels = labels;
+        this.treeDataProvider = treeDataProvider;
     }
 
     /**
@@ -17,9 +25,8 @@ module.exports = class EditItemLabelCommand {
      */
     async execute(moduleDefinition) {
         const newLabel = await vscode.window.showInputBox();
-        moduleDefinition.setLabel(newLabel);
-
         await this.labels.set(moduleDefinition.name, newLabel);
+        this.treeDataProvider.updateTree();
         vscode.window.showInformationMessage(`Label for ${moduleDefinition.name} updated to ${newLabel}`);
     }
 }

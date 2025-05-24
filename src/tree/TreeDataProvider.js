@@ -1,19 +1,18 @@
 const vscode = require('vscode');
 /**
- * @import { ModuleDefinition } from './ModuleDefinition';
  * @import { TreeDataProvider } from 'vscode';
  * @import { GlobalPath } from '../common/path/Path';
  * @import ModuleCache from './ModuleCache';
  * @import Labels from '../common/path/Labels';
- * @class @implements {TreeDataProvider<ModuleDefinition>}
+ * @class @implements {TreeDataProvider<GlobalPath>}
  */
 class ImportTreeDataProvider {
     /** @param {{ cache: ModuleCache, labels: Labels }} dependencies */
     constructor({ cache, labels }) {
         this.cache = cache;
         this.labels = labels;
-        /** @type {ModuleDefinition[]} */
-        this.tree = [];
+        /** @type {GlobalPath[]} */
+        this.roots = [];
 
         this._onDidChangeTreeData = new vscode.EventEmitter();
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
@@ -24,56 +23,15 @@ class ImportTreeDataProvider {
     }
 
     /**
-     * 
-     * @param {GlobalPath} path 
-     * @returns {ModuleDefinition}
+     * @param {GlobalPath[]} roots
      */
-    createItem(path) {
-        const item = this.cache.get(path);
-        if (item) return item;
-
-        /**@type {Partial<ModuleDefinition>}*/
-        const newItem = {
-            path,
-            imports: [],
-            setLabel: (label) => {
-                this.labels.set(newItem.name, label);
-                this.updateTree();
-            },
-        }
-        const typedItem = /** @type {ModuleDefinition} */(newItem);
-
-        this.cache.set(path, typedItem);
-        return typedItem;
-    }
-
-    /**
-     * @param {ModuleDefinition} item
-     */
-    setItem(item) {
-        this.cache.set(item.path, item);
-    }
-
-    /**
-     *
-     * @param {GlobalPath} path
-     * @returns {ModuleDefinition | null}
-     */
-    getItem(path) {
-        if (this.cache.has(path)) {
-            return this.cache.get(path);
-        }
-        return null;
-    }
-    /**
-     * @param {ModuleDefinition[]} tree
-     */
-    setTree(tree) {
-        this.tree = tree;
+    setRoots(roots) {
+        this.roots = roots;
         this.updateTree();
     }
 
-    getTreeItem(/**@type {ModuleDefinition} */ element) {
+    getTreeItem(/**@type {GlobalPath} */ path) {
+        const element = this.cache.get(path);
         return {
             label: this.labels.get(element.name) ?? element.name.valueOf(),
             collapsibleState: element.imports.length > 0 ? 1 : 0,
@@ -84,12 +42,15 @@ class ImportTreeDataProvider {
             }
         };
     }
-    getChildren(/**@type {ModuleDefinition}*/element) {
-        if (!element) return this.tree;
-        if (!element.hasResolvedImports) return [];
-        return element.imports;
+    getChildren(/**@type {GlobalPath}*/path) {
+        if (!path) return this.roots;
+        if (!this.cache.has(path)) return [];
+        const element = this.cache.get(path);
+        const imports = element.imports;
+        // Only shows tree children if all of them are already cached
+        if (imports.every(importPath => this.cache.has(importPath))) return imports;
+        return [];
     }
 }
-
 
 module.exports = ImportTreeDataProvider;

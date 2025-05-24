@@ -9,13 +9,5 @@
  *      contents: string,
  *      extension: string,
  *      imports: GlobalPath[],
- *      setLabel: (label: string) => void,
  * }} ModuleDefinition
- */
-
-/**
- * @typedef {{
- *     path: GlobalPath,
- *     imports: PathTreeNode[]
- * }} PathTreeNode
  */

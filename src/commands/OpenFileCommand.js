@@ -1,6 +1,6 @@
 const vscode = require('vscode');
 /**
- * @import { ModuleDefinition } from '../tree/ModuleDefinition';
+ * @import { ModuleDefinition } from '../tree/types';
  */
 module.exports = class OpenFileCommand {
     /**
