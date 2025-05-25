@@ -13,7 +13,15 @@
  * 
  * @typedef {{
  *      path: GlobalPath,
+ *      type?: 'library' | 'local',
  *      specifiers: string[],
  *      defaultAlias: string | null,
+ *      namespaceAlias: string | null,
  * }} ImportDefinition
+ * 
+ * @typedef {{
+ *      isDefault: boolean,
+ *      isNamespace: boolean,
+ *      name: string,
+ * }} ImportedVariable
  */

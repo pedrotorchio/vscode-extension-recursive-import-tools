@@ -27,11 +27,17 @@ module.exports = class GenerateDownstreamTreeCommand {
         const entryPaths = vscode.window.visibleTextEditors.map(editor => Global(editor.document.uri.fsPath));
         const parseEntryPath = (/**@type {GlobalPath}*/absolutePath) => parseFile(absolutePath, {
             moduleCache: this.moduleCache,
-            workspacePackageMap: this.workspacePackageMap
+            workspacePackageMap: this.workspacePackageMap,
         });
         // Parse all entry paths in parallel, adding them to the module cache
-        await Promise.all(entryPaths.map(parseEntryPath));
-        // update the tree data provider with the new roots
-        this.treeDataProvider.setRoots(entryPaths);
+        return Promise.all(entryPaths.map(parseEntryPath))
+            .then(() => {
+                // update the tree data provider with the new roots
+                this.treeDataProvider.setRoots(entryPaths);
+            }).catch(err => {
+                console.error('Error parsing entry paths:', err);
+                vscode.window.showErrorMessage('Failed to parse entry paths. Check the console for details.');
+                this.treeDataProvider.setRoots([]);
+            });
     }
 } 

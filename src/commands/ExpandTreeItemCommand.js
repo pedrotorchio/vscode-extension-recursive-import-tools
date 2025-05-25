@@ -26,6 +26,8 @@ module.exports = class ExpandTreeItemCommand {
         await parseImports(moduleDefinition.imports, {
             moduleCache: this.moduleCache,
             workspacePackageMap: this.workspacePackageMap,
+        }).catch(err => {
+            console.error(`Error parsing imports for ${element.path.valueOf()}:`, err);
         });
         this.treeDataProvider.updateTree();
     }

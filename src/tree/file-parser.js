@@ -49,7 +49,7 @@ async function parseFile(absolutePath, { workspacePackageMap, moduleCache }) {
      * @param {{
      *  libraryName: string,
      * }} args
-     * @returns {GlobalPath | null}
+     * @returns {{ path: GlobalPath, type: 'local' | 'library' } | null}
      */
     const resolveModuleCompletePath = ({ libraryName }) => {
         if (path.isAbsolute(libraryName)) return null;
@@ -64,7 +64,10 @@ async function parseFile(absolutePath, { workspacePackageMap, moduleCache }) {
         const completeAbsolutePath = ensureFilepathWithExtension(absoluteImportPath);
         if (!completeAbsolutePath) return null;
 
-        return completeAbsolutePath;
+        return {
+            path: completeAbsolutePath,
+            type: isRelativePath ? 'local' : 'library',
+        };
     }
 
     const resolveImportName = () => {
@@ -76,24 +79,27 @@ async function parseFile(absolutePath, { workspacePackageMap, moduleCache }) {
     /** 
      * @typedef {{
      *      libraryName: string, 
-     *      defaultAlias: string, 
-     *      specifiers: { specifier: string, alias: string }[]
+     *      defaultAlias?: string | null, 
+     *      alias?: string | null, // When it's a namespace (import * as Alias from 'package')
+     *      specifiers?: { specifier: string, alias: string }[]
      * }} ImportedModule 
      **/
 
     // Then recursively visit nested imports
-    // @ts-expect-error: Intentional cast, types do not fully overlap
     const importAbsolutePaths = /** @type {ImportedModule[]} */ (parsedFile.imports)
         .map(/**@type {ImportedModule}*/importedModule => {
-            const path = resolveModuleCompletePath({ libraryName: importedModule.libraryName });
+            const { path, type } = resolveModuleCompletePath({ libraryName: importedModule.libraryName }) ?? {};
             if (!path) return null;
-            const specifiers = importedModule.specifiers.map(({ specifier, alias }) => alias ?? specifier);
+            const specifiers = importedModule.specifiers?.map(({ specifier, alias }) => alias ?? specifier) ?? [];
             const defaultAlias = importedModule.defaultAlias ?? null;
+            const namespaceAlias = importedModule.alias ?? null;
 
             return {
                 path,
+                type,
                 specifiers,
-                defaultAlias
+                defaultAlias,
+                namespaceAlias
             };
         })
         .filter(Boolean);
