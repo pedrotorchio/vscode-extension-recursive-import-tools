@@ -1,16 +1,18 @@
+
 const vscode = require('vscode');
 /**
  * @import { TreeDataProvider } from 'vscode';
  * @import { GlobalPath } from '../common/path/Path';
  * @import ModuleCache from './ModuleCache';
  * @import Labels from '../common/path/Labels';
- * @class @implements {TreeDataProvider<GlobalPath>}
+ * @import { ImportDefinition } from './types';
+ * @class @implements {TreeDataProvider<ImportDefinition>}
  */
 class ImportTreeDataProvider {
     static icons = {
         downstream_dependency: new vscode.ThemeIcon('type-hierarchy-sub'),
         upstream_dependency: new vscode.ThemeIcon('type-hierarchy-super'),
-        leaf_dependency: new vscode.ThemeIcon('chevron-right'),
+        leaf_dependency: new vscode.ThemeIcon('file-code'),
         namedVariable: new vscode.ThemeIcon('symbol-variable'),
     }
     /** @param {{ cache: ModuleCache, labels: Labels }} dependencies */
@@ -38,10 +40,11 @@ class ImportTreeDataProvider {
 
     /**
      * 
-     * @param {GlobalPath} path 
+     * @param {ImportDefinition} importDefinition 
      * @returns {vscode.TreeItem}
      */
-    getTreeItem(path) {
+    getTreeItem(importDefinition) {
+        const path = importDefinition.path;
         const element = this.cache.get(path);
         const imports = element.imports;
         const hasChildren = imports.length > 0;
@@ -58,13 +61,18 @@ class ImportTreeDataProvider {
                 : ImportTreeDataProvider.icons.leaf_dependency
         };
     }
-    getChildren(/**@type {GlobalPath}*/path) {
-        if (!path) return this.roots;
+    getChildren(/**@type {ImportDefinition}*/importDefinition) {
+        const path = importDefinition?.path;
+        if (!path) {
+            const specifiers = [];
+            const defaultAlias = null;
+            return this.roots.map(rootPath => ({ path: rootPath, specifiers, defaultAlias }));
+        }
         if (!this.cache.has(path)) return [];
         const element = this.cache.get(path);
         const imports = element.imports;
         // Only shows tree children if all of them are already cached
-        if (imports.every(importPath => this.cache.has(importPath))) return imports;
+        if (imports.every(importDefinition => this.cache.has(importDefinition.path))) return imports;
         return [];
     }
 }

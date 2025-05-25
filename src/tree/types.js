@@ -8,6 +8,12 @@
  *      path: GlobalPath,
  *      contents: string,
  *      extension: string,
- *      imports: GlobalPath[],
+ *      imports: ImportDefinition[],
  * }} ModuleDefinition
+ * 
+ * @typedef {{
+ *      path: GlobalPath,
+ *      specifiers: string[],
+ *      defaultAlias: string | null,
+ * }} ImportDefinition
  */

@@ -4,8 +4,9 @@ const { Global } = require('../common/path/Path');
 /**
  * @import ImportTreeDataProvider from '../tree/TreeDataProvider';
  * @import Labels from '../common/path/Labels';
- * @import { GlobalPath, RelativeImportPath } from '../common/path/Path';
+ * @import { GlobalPath } from '../common/path/Path';
  * @import ModuleCache from '../tree/ModuleCache';
+ * @import { ImportDefinition } from '../tree/types';
 */
 
 /**
@@ -26,9 +27,9 @@ module.exports = class EditItemLabelCommand {
     }
 
     /**
-     * @param {GlobalPath} globalPath
+     * @param {ImportDefinition} importDefinition
      */
-    async execute(globalPath) {
+    async execute({ path: globalPath }) {
         const moduleDefinition = this.moduleCache.get(globalPath);
         const currentLabel = this.labels.get(moduleDefinition.name) || moduleDefinition.name;
         const newLabel = await vscode.window.showInputBox({

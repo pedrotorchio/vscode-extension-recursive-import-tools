@@ -1,6 +1,6 @@
 /**
  * @import { GlobalPath } from '../common/path/Path';
- * @import { ModuleDefinition, PathTreeNode } from './types';
+ * @import { ImportDefinition, ModuleDefinition } from './types';
  * @import { WorkspacePackageMap } from '../common/package/utils';
  * @import ModuleCache from '../tree/ModuleCache';
 */
@@ -73,9 +73,32 @@ async function parseFile(absolutePath, { workspacePackageMap, moduleCache }) {
         const itemName = join(Library(packageJson.name), relativePath);
         return itemName;
     }
+    /** 
+     * @typedef {{
+     *      libraryName: string, 
+     *      defaultAlias: string, 
+     *      specifiers: { specifier: string, alias: string }[]
+     * }} ImportedModule 
+     **/
 
     // Then recursively visit nested imports
-    const importAbsolutePaths = parsedFile.imports.map(resolveModuleCompletePath).filter(Boolean);
+    // @ts-expect-error: Intentional cast, types do not fully overlap
+    const importAbsolutePaths = /** @type {ImportedModule[]} */ (parsedFile.imports)
+        .map(/**@type {ImportedModule}*/importedModule => {
+            const path = resolveModuleCompletePath({ libraryName: importedModule.libraryName });
+            if (!path) return null;
+            const specifiers = importedModule.specifiers.map(({ specifier, alias }) => alias ?? specifier);
+            const defaultAlias = importedModule.defaultAlias ?? null;
+
+            return {
+                path,
+                specifiers,
+                defaultAlias
+            };
+        })
+        .filter(Boolean);
+    // import.defaultAlias
+    // import.specifiers.specifier
     // Register module and return it
     return moduleCache.set({
         path: absolutePath,
@@ -148,7 +171,14 @@ const forEachExtensionCheckExists = (pather) => {
 const parseFiles = (/**@type {GlobalPath[]}*/ filePaths, /**@type {Args}*/args) => {
     return Promise.all(filePaths.map(path => parseFile(path, args)));
 }
+const parseImports = (/**@type {ImportDefinition[]}*/ importDefinitions, /**@type {Args}*/ args) => {
+    return parseFiles(
+        importDefinitions.map(importDefinition => importDefinition.path),
+        args
+    );
+}
 module.exports = {
     parseFile,
     parseFiles,
+    parseImports
 };

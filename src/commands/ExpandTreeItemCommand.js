@@ -1,9 +1,9 @@
 /**
  * @import { TreeViewExpansionEvent } from "vscode";
- * @import { GlobalPath } from "../common/path/Path";
  * @import { WorkspacePackageMap } from "../common/package/utils";
  * @import ImportTreeDataProvider from "../tree/TreeDataProvider";
  * @import ModuleCache from "../tree/ModuleCache";
+ * @import { ImportDefinition } from "../tree/types";
  * 
  * @typedef {{
  *    workspacePackageMap: WorkspacePackageMap,
@@ -11,7 +11,7 @@
  *    moduleCache: ModuleCache
  * }} Args
  */
-const { parseFiles } = require("../tree/file-parser");
+const { parseImports } = require("../tree/file-parser");
 module.exports = class ExpandTreeItemCommand {
     /** @param {Args} args */
     constructor({ workspacePackageMap, treeDataProvider, moduleCache }) {
@@ -20,10 +20,10 @@ module.exports = class ExpandTreeItemCommand {
         this.moduleCache = moduleCache;
     }
 
-    /** @param { TreeViewExpansionEvent<GlobalPath> } event */
+    /** @param { TreeViewExpansionEvent<ImportDefinition> } event */
     async execute({ element }) {
-        const moduleDefinition = this.moduleCache.get(element);
-        await parseFiles(moduleDefinition.imports, {
+        const moduleDefinition = this.moduleCache.get(element.path);
+        await parseImports(moduleDefinition.imports, {
             moduleCache: this.moduleCache,
             workspacePackageMap: this.workspacePackageMap,
         });
