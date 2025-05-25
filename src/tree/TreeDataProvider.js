@@ -7,6 +7,12 @@ const vscode = require('vscode');
  * @class @implements {TreeDataProvider<GlobalPath>}
  */
 class ImportTreeDataProvider {
+    static icons = {
+        downstream_dependency: new vscode.ThemeIcon('type-hierarchy-sub'),
+        upstream_dependency: new vscode.ThemeIcon('type-hierarchy-super'),
+        leaf_dependency: new vscode.ThemeIcon('primitive-square'),
+        namedVariable: new vscode.ThemeIcon('symbol-variable'),
+    }
     /** @param {{ cache: ModuleCache, labels: Labels }} dependencies */
     constructor({ cache, labels }) {
         this.cache = cache;
@@ -30,16 +36,26 @@ class ImportTreeDataProvider {
         this.updateTree();
     }
 
-    getTreeItem(/**@type {GlobalPath} */ path) {
+    /**
+     * 
+     * @param {GlobalPath} path 
+     * @returns {vscode.TreeItem}
+     */
+    getTreeItem(path) {
         const element = this.cache.get(path);
+        const imports = element.imports;
+        const hasChildren = imports.length > 0;
         return {
             label: this.labels.get(element.name) ?? element.name.valueOf(),
-            collapsibleState: element.imports.length > 0 ? 1 : 0,
+            collapsibleState: hasChildren ? 1 : 0,
             command: {
                 command: 'recursive-import-tools.import-tree-open-file',
                 title: 'Open file',
                 arguments: [element]
-            }
+            },
+            iconPath: hasChildren
+                ? ImportTreeDataProvider.icons.downstream_dependency
+                : ImportTreeDataProvider.icons.leaf_dependency
         };
     }
     getChildren(/**@type {GlobalPath}*/path) {

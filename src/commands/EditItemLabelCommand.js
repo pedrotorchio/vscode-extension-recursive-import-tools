@@ -80,7 +80,7 @@ module.exports = class EditItemLabelCommand {
         const customLabelPattern = this.getRelativePatternString(globalPath);
         const currentLabel = currentPatterns[customLabelPattern] ?? filename;
 
-        if (!renameTo) delete currentPatterns[customLabelPattern];
+        if (!renameTo) currentPatterns[customLabelPattern] = undefined;
         else currentPatterns[customLabelPattern] = renameTo;
 
         return configuration.update(CONFIG_KEY_PATTERNS, currentPatterns, vscode.ConfigurationTarget.Workspace)
