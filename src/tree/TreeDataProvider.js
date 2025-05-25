@@ -10,7 +10,7 @@ class ImportTreeDataProvider {
     static icons = {
         downstream_dependency: new vscode.ThemeIcon('type-hierarchy-sub'),
         upstream_dependency: new vscode.ThemeIcon('type-hierarchy-super'),
-        leaf_dependency: new vscode.ThemeIcon('primitive-square'),
+        leaf_dependency: new vscode.ThemeIcon('chevron-right'),
         namedVariable: new vscode.ThemeIcon('symbol-variable'),
     }
     /** @param {{ cache: ModuleCache, labels: Labels }} dependencies */
