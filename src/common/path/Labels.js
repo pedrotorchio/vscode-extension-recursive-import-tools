@@ -33,6 +33,15 @@ module.exports = class Labels {
     }
 
     /**
+     * @param {RelativeImportPath | LibraryImportPath} path
+     */
+    async clear(path) {
+        const key = Labels.mkKey(path);
+        this.cache.delete(key);
+        await this.context.workspaceState.update(key, undefined);
+    }
+
+    /**
      * @param {RelativeImportPath | LibraryImportPath} path 
      * @param {string} label
      * @returns {Promise<string>}
