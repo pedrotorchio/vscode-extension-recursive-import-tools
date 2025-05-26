@@ -22,7 +22,8 @@
       "explorer": [
         {
           "id": "imports_tree",
-          "name": "Imports tree"
+          "name": "Imports tree",
+          "icon": "$(file-directory)"
         }
       ]
     },
@@ -35,6 +36,16 @@
         "command": "recursive-import-tools.edit-item-label",
         "title": "Edit item label",
         "icon": "$(edit)"
+      },
+      {
+        "command": "recursive-import-tools.toggle-visibility",
+        "title": "Toggle hidden items",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "recursive-import-tools.hide-import",
+        "title": "Hide dependency",
+        "icon": "$(eye-closed)"
       }
     ],
     "menus": {
@@ -47,8 +58,20 @@
       "view/item/context": [
         {
           "command": "recursive-import-tools.edit-item-label",
-          "when": "view == imports_tree",
+          "when": "view == imports_tree && viewItem != 'variable'",
           "group": "inline"
+        },
+        {
+          "command": "recursive-import-tools.hide-import",
+          "when": "view == imports_tree && viewItem != 'variable'",
+          "group": "inline"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "recursive-import-tools.toggle-visibility",
+          "when": "view == imports_tree",
+          "group": "navigation"
         }
       ]
     },

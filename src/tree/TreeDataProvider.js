@@ -50,6 +50,7 @@ class ImportTreeDataProvider {
         if (isImportedVariable(importDefinition)) return {
             label: getLabel(importDefinition, this.labels),
             collapsibleState: 0,
+            contextValue: 'variable',
             iconPath: importDefinition.isDefault || importDefinition.isNamespace
                 ? ImportTreeDataProvider.icons.defaultVariable
                 : ImportTreeDataProvider.icons.namedVariable,
@@ -68,7 +69,7 @@ class ImportTreeDataProvider {
                 arguments: [element]
             },
             iconPath: getIcon(importDefinition),
-
+            contextValue: 'module'
         };
     }
 
@@ -141,6 +142,16 @@ const getLabel = (def, labels) => {
     }
 
     return labels.get(def.name) ?? def.name.valueOf();
+}
+
+/**
+ * @param {ImportedVariable} importDefinition
+ * @returns {'default' | 'named' | 'namespace'}
+ */
+const getVariableType = (importDefinition) => {
+    if (importDefinition.isDefault) return 'default';
+    if (importDefinition.isNamespace) return 'namespace';
+    return 'named';
 }
 /**
  * 
