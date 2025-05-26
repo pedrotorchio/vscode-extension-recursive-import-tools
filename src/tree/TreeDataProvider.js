@@ -15,8 +15,8 @@ class ImportTreeDataProvider {
         leaf_dependency: new vscode.ThemeIcon('white-space'),
         library: new vscode.ThemeIcon('library'),
         local: new vscode.ThemeIcon('search-details'),
-        namedVariable: new vscode.ThemeIcon('debug-stackframe-dot'),
-        defaultVariable: new vscode.ThemeIcon('primitive-dot')
+        namedVariable: new vscode.ThemeIcon('bracket'),
+        defaultVariable: new vscode.ThemeIcon('preserve-case')
     }
     /** @param {{ cache: ModuleCache, labels: Labels }} dependencies */
     constructor({ cache, labels }) {
@@ -136,8 +136,8 @@ const getIcon = (def) => {
 const getLabel = (def, labels) => {
     if (isImportedVariable(def)) {
         const name = def.name;
-        if (def.isDefault) return name + ' (default)';
-        if (def.isNamespace) return name + ' (namespace)';
+        if (def.isDefault) return `default ${name}`;
+        if (def.isNamespace) return `* as ${name}`;
         return name;
     }
 
