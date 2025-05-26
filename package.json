@@ -1,5 +1,9 @@
 {
-  "name": "@pedrotorchio/recursive-import-tools",
+  "name": "recursive-import-tools",
+  "author": {
+    "name": "Pedro Torchio",
+    "email": "pedrotorchio@gmail.com"
+  },
   "displayName": "Recursive import tools",
   "description": "",
   "version": "0.0.1",
