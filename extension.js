@@ -20,6 +20,7 @@ const ExpandTreeItemCommand = require('./src/commands/ExpandTreeItemCommand');
  */
 function activate(context) {
 	const rootPath = Global(vscode.workspace.workspaceFolders[0].uri.fsPath);
+	const outputChannel = vscode.window.createOutputChannel('Recursive Import Tools');
 	const workspacePackageMap = getWorkspaceMap(rootPath);
 
 	const moduleCache = new ModuleCache();
@@ -30,10 +31,10 @@ function activate(context) {
 		showCollapseAll: true,
 	});
 
-	const openFileCommand = new OpenFileCommand();
-	const editItemLabelCommand = new EditItemLabelCommand({ labels, treeDataProvider, moduleCache });
-	const downstreamTreeRefreshCommand = new GenerateDownstreamTreeCommand({ treeDataProvider, workspacePackageMap, moduleCache });
-	const expandTreeItemCommand = new ExpandTreeItemCommand({ workspacePackageMap, treeDataProvider, moduleCache });
+	const openFileCommand = new OpenFileCommand({ logger: outputChannel });
+	const editItemLabelCommand = new EditItemLabelCommand({ labels, treeDataProvider, moduleCache, logger: outputChannel });
+	const downstreamTreeRefreshCommand = new GenerateDownstreamTreeCommand({ treeDataProvider, workspacePackageMap, moduleCache, logger: outputChannel });
+	const expandTreeItemCommand = new ExpandTreeItemCommand({ workspacePackageMap, treeDataProvider, moduleCache, logger: outputChannel });
 
 	const searchDisposable = vscode.commands.registerCommand('recursive-import-tools.update-tree', () => downstreamTreeRefreshCommand.execute());
 	const onClickDisposable = vscode.commands.registerCommand('recursive-import-tools.import-tree-open-file', (module) => openFileCommand.execute(module));

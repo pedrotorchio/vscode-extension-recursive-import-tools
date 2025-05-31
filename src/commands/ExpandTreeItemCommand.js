@@ -4,20 +4,23 @@
  * @import ImportTreeDataProvider from "../tree/TreeDataProvider";
  * @import ModuleCache from "../tree/ModuleCache";
  * @import { ImportDefinition } from "../tree/types";
+ * @import { OutputChannel } from "vscode";
  * 
  * @typedef {{
  *    workspacePackageMap: WorkspacePackageMap,
  *    treeDataProvider: ImportTreeDataProvider
  *    moduleCache: ModuleCache
+ *    logger: OutputChannel
  * }} Args
  */
 const { parseImports } = require("../tree/file-parser");
 module.exports = class ExpandTreeItemCommand {
     /** @param {Args} args */
-    constructor({ workspacePackageMap, treeDataProvider, moduleCache }) {
+    constructor({ workspacePackageMap, treeDataProvider, moduleCache, logger }) {
         this.workspacePackageMap = workspacePackageMap;
         this.treeDataProvider = treeDataProvider;
         this.moduleCache = moduleCache;
+        this.logger = logger;
     }
 
     /** @param { TreeViewExpansionEvent<ImportDefinition> } event */
@@ -28,6 +31,7 @@ module.exports = class ExpandTreeItemCommand {
             workspacePackageMap: this.workspacePackageMap,
         }).catch(err => {
             console.error(`Error parsing imports for ${element.path.valueOf()}:`, err);
+            this.logger.appendLine(`Error parsing imports for "${element.path.valueOf()}": "${err.message}"`);
         });
         this.treeDataProvider.updateTree();
     }

@@ -7,6 +7,7 @@ const { Global } = require('../common/path/Path');
  * @import { GlobalPath } from '../common/path/Path';
  * @import ModuleCache from '../tree/ModuleCache';
  * @import { ImportDefinition } from '../tree/types';
+ * @import { OutputChannel } from 'vscode';
 */
 
 /**
@@ -14,16 +15,18 @@ const { Global } = require('../common/path/Path');
  *      labels: Labels
  *      treeDataProvider: ImportTreeDataProvider
  *      moduleCache: ModuleCache
+ *      logger: OutputChannel
  * }} Args
  */
 module.exports = class EditItemLabelCommand {
     /**
      * @param {Args} args
      */
-    constructor({ labels, treeDataProvider, moduleCache }) {
+    constructor({ labels, treeDataProvider, moduleCache, logger }) {
         this.labels = labels;
         this.treeDataProvider = treeDataProvider;
         this.moduleCache = moduleCache;
+        this.logger = logger;
     }
 
     /**
@@ -43,6 +46,8 @@ module.exports = class EditItemLabelCommand {
         await this.renameTab(globalPath, newLabel || null)
             .catch((error) => {
                 vscode.window.showErrorMessage(`Failed to update tab label: ${error.message}`);
+                this.logger.appendLine(`Failed to update tab label for "${moduleDefinition.name}": ${error.message}`);
+                return Promise.reject(error);
             });
 
         if (!newLabel) this.labels.clear(moduleDefinition.name);

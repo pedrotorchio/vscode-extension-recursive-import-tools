@@ -3,6 +3,7 @@
  * @import { WorkspacePackageMap } from '../common/package/utils';
  * @import ModuleCache from '../tree/ModuleCache';
  * @import { GlobalPath } from '../common/path/Path';
+ * @import {OutputChannel} from 'vscode';
  */
 const vscode = require('vscode');
 const { Global } = require('../common/path/Path');
@@ -13,15 +14,17 @@ const { parseFile } = require('../tree/file-parser');
  * @typedef {{
  *     moduleCache: ModuleCache,
  *     treeDataProvider: ImportTreeDataProvider,
- *     workspacePackageMap: WorkspacePackageMap
+ *     workspacePackageMap: WorkspacePackageMap,
+ *     logger: OutputChannel
  * }} Args
  */
 module.exports = class GenerateDownstreamTreeCommand {
     /** @param {Args} args */
-    constructor({ treeDataProvider, workspacePackageMap, moduleCache }) {
+    constructor({ treeDataProvider, workspacePackageMap, moduleCache, logger }) {
         this.treeDataProvider = treeDataProvider;
         this.workspacePackageMap = workspacePackageMap;
         this.moduleCache = moduleCache;
+        this.logger = logger;
     }
     async execute() {
         const entryPaths = vscode.window.visibleTextEditors.map(editor => Global(editor.document.uri.fsPath));
@@ -36,7 +39,8 @@ module.exports = class GenerateDownstreamTreeCommand {
                 this.treeDataProvider.setRoots(entryPaths);
             }).catch(err => {
                 console.error('Error parsing entry paths:', err);
-                vscode.window.showErrorMessage('Failed to parse entry paths. Check the console for details.');
+                vscode.window.showErrorMessage('Failed to parse entry paths. Check the output channel for details.');
+                this.logger.appendLine(`Failed to parse entry paths: "${err.message}"`);
                 this.treeDataProvider.setRoots([]);
             });
     }
