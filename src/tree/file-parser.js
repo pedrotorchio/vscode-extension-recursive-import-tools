@@ -41,7 +41,7 @@ async function parseFile(absolutePath, { workspacePackageMap, moduleCache }) {
     console.log(`Parsing file: ${absolutePath} (${context.recursingCount})`);
 
     const basePath = Global(path.dirname(absolutePath.valueOf()));
-    const contentsBytes = await vscode.workspace.fs.readFile(vscode.Uri.file(absolutePath));
+    const contentsBytes = await vscode.workspace.fs.readFile(vscode.Uri.file(absolutePath.valueOf()));
     const contentsString = Buffer.from(contentsBytes).toString('utf8');
     const parsedFile = await typescriptParser.parseSource(contentsString);
 
