@@ -37,11 +37,11 @@ async function parseFile(absolutePath, { workspacePackageMap, moduleCache }) {
         console.log(`Module already cached: ${absolutePath}`);
         return moduleCache.get(absolutePath);
     }
+    const pathString = absolutePath.valueOf();
     context.recursingCount++;
-    console.log(`Parsing file: ${absolutePath} (${context.recursingCount})`);
-
-    const basePath = Global(path.dirname(absolutePath.valueOf()));
-    const contentsBytes = await vscode.workspace.fs.readFile(vscode.Uri.file(absolutePath));
+    console.log(`Parsing file: ${pathString} (${context.recursingCount})`);
+    const basePath = Global(path.dirname(pathString));
+    const contentsBytes = await vscode.workspace.fs.readFile(vscode.Uri.file(pathString));
     const contentsString = Buffer.from(contentsBytes).toString('utf8');
     const parsedFile = await typescriptParser.parseSource(contentsString);
 
