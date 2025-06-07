@@ -34,6 +34,12 @@ module.exports = class EditItemLabelCommand {
      */
     async execute({ path: globalPath }) {
         const moduleDefinition = this.moduleCache.get(globalPath);
+        if (!moduleDefinition) {
+            const message = `Module definition not found for "${globalPath.valueOf()}, when attempting to edit module label. "`;
+            this.logger.appendLine(message);
+            vscode.window.showErrorMessage(message);
+            return;
+        }
         const currentLabel = this.labels.get(moduleDefinition.name) || moduleDefinition.name;
         const newLabel = await vscode.window.showInputBox({
             placeHolder: moduleDefinition.name,
@@ -77,7 +83,7 @@ module.exports = class EditItemLabelCommand {
         const configuration = vscode.workspace.getConfiguration();
         // Ensure the custom labels feature is enabled
         configuration.update(CONFIG_KEY_ENABLED, true, vscode.ConfigurationTarget.Workspace);
-        /** @type {Record<string, string>} */
+        /** @type {Record<string, string | undefined>} */
         const currentPatterns = configuration.get(CONFIG_KEY_PATTERNS) ?? {};
         const filename = path.basename(globalPath.valueOf());
         // For windows, absolute paths start with a drive letter, e.g. C:, E:, D:

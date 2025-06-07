@@ -13,6 +13,7 @@
  *    logger: OutputChannel
  * }} Args
  */
+const vscode = require("vscode");
 const { parseImports } = require("../tree/file-parser");
 module.exports = class ExpandTreeItemCommand {
     /** @param {Args} args */
@@ -26,6 +27,12 @@ module.exports = class ExpandTreeItemCommand {
     /** @param { TreeViewExpansionEvent<ImportDefinition> } event */
     async execute({ element }) {
         const moduleDefinition = this.moduleCache.get(element.path);
+        if (!moduleDefinition) {
+            const message = `Module definition not found for "${element.path.valueOf()}" when expanding tree item.`;
+            vscode.window.showErrorMessage(message);
+            this.logger.appendLine(message);
+            return;
+        }
         await parseImports(moduleDefinition.imports, {
             moduleCache: this.moduleCache,
             workspacePackageMap: this.workspacePackageMap,

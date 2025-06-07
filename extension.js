@@ -19,6 +19,10 @@ const ExpandTreeItemCommand = require('./src/commands/ExpandTreeItemCommand');
  * @param {ExtensionContext} context
  */
 function activate(context) {
+	if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
+		vscode.window.showErrorMessage('No workspace folder is open. Please open a workspace to use Recursive Import Tools.');
+		return;
+	}
 	const rootPath = Global(vscode.workspace.workspaceFolders[0].uri.fsPath);
 	const outputChannel = vscode.window.createOutputChannel('Recursive Import Tools');
 	const workspacePackageMap = getWorkspaceMap(rootPath);
