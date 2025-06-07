@@ -27,7 +27,11 @@ module.exports = class GenerateDownstreamTreeCommand {
         this.logger = logger;
     }
     async execute() {
-        const entryPaths = vscode.window.visibleTextEditors.map(editor => Global(editor.document.uri.fsPath));
+        const entryPaths = vscode.window.visibleTextEditors
+            .map(editor => editor.document.uri)
+            .filter(uri => uri.scheme === 'file')
+            .map(uri => Global(uri.fsPath));
+
         const parseEntryPath = (/**@type {GlobalPath}*/absolutePath) => parseFile(absolutePath, {
             moduleCache: this.moduleCache,
             workspacePackageMap: this.workspacePackageMap,
