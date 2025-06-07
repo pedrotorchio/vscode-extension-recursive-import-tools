@@ -50,12 +50,29 @@
         "command": "recursive-import-tools.hide-import",
         "title": "Hide dependency",
         "icon": "$(eye-closed)"
+      },
+      {
+        "command": "recursive-import-tools.list-variables-first",
+        "title": "List variables first",
+        "icon": "$(list-selection)"
       }
     ],
     "menus": {
       "commandPalette": [
         {
           "command": "recursive-import-tools.edit-item-label",
+          "when": "false"
+        },
+        {
+          "command": "recursive-import-tools.toggle-visibility",
+          "when": "false"
+        },
+        {
+          "command": "recursive-import-tools.hide-import",
+          "when": "false"
+        },
+        {
+          "command": "recursive-import-tools.list-variables-first",
           "when": "false"
         }
       ],
@@ -64,16 +81,11 @@
           "command": "recursive-import-tools.edit-item-label",
           "when": "view == imports_tree && viewItem != 'variable'",
           "group": "inline"
-        },
-        {
-          "command": "recursive-import-tools.hide-import",
-          "when": "view == imports_tree && viewItem != 'variable'",
-          "group": "inline"
         }
       ],
       "view/title": [
         {
-          "command": "recursive-import-tools.toggle-visibility",
+          "command": "recursive-import-tools.list-variables-first",
           "when": "view == imports_tree",
           "group": "navigation"
         }
