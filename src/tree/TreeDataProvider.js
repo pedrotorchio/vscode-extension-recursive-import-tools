@@ -30,7 +30,7 @@ class ImportTreeDataProvider {
     }
 
     updateTree() {
-        this._onDidChangeTreeData.fire();
+        this._onDidChangeTreeData.fire(null);
     }
 
     /**
@@ -58,6 +58,8 @@ class ImportTreeDataProvider {
 
         const path = importDefinition.path;
         const element = this.cache.get(path);
+        if (!element) throw new Error(`Element not found in cache for path: ${path}`);
+
         const imports = element.imports;
         const hasChildren = imports.length > 0;
         return {
@@ -82,8 +84,9 @@ class ImportTreeDataProvider {
             const defaultAlias = null;
             return this.roots.map(rootPath => /**@type {ImportDefinition}*/({ path: rootPath, specifiers, defaultAlias }));
         }
-        if (!this.cache.has(path)) return [];
         const element = this.cache.get(path);
+        if (!element) throw new Error(`Element not found in cache for path: ${path}`);
+
         const imports = element.imports;
         // Only shows tree children if all of them are already cached
         const areAllImportsCached = imports.every(importDefinition => this.cache.has(importDefinition.path));

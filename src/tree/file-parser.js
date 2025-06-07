@@ -59,7 +59,7 @@ async function parseFile(absolutePath, { workspacePackageMap, moduleCache }) {
 
         const absoluteImportPath = isRelativePath
             ? resolve(basePath, libraryName)
-            : workspacePackageAbsolutePath;
+            : Global(workspacePackageAbsolutePath);
 
         const completeAbsolutePath = ensureFilepathWithExtension(absoluteImportPath);
         if (!completeAbsolutePath) return null;
@@ -86,23 +86,25 @@ async function parseFile(absolutePath, { workspacePackageMap, moduleCache }) {
      **/
 
     // Then recursively visit nested imports
-    const importAbsolutePaths = /** @type {ImportedModule[]} */ (parsedFile.imports)
-        .map(/**@type {ImportedModule}*/importedModule => {
-            const { path, type } = resolveModuleCompletePath({ libraryName: importedModule.libraryName }) ?? {};
-            if (!path) return null;
-            const specifiers = importedModule.specifiers?.map(({ specifier, alias }) => alias ?? specifier) ?? [];
-            const defaultAlias = importedModule.defaultAlias ?? null;
-            const namespaceAlias = importedModule.alias ?? null;
+    /** @param {ImportedModule} importedModule @returns {ImportDefinition | null} */
+    const importedModuleToImportDefinition = (importedModule) => {
+        const { path, type } = resolveModuleCompletePath({ libraryName: importedModule.libraryName }) ?? {};
+        if (!path) return null;
+        const specifiers = importedModule.specifiers?.map(({ specifier, alias }) => alias ?? specifier) ?? [];
+        const defaultAlias = importedModule.defaultAlias ?? null;
+        const namespaceAlias = importedModule.alias ?? null;
 
-            return {
-                path,
-                type,
-                specifiers,
-                defaultAlias,
-                namespaceAlias
-            };
-        })
-        .filter(Boolean);
+        return {
+            path,
+            type,
+            specifiers,
+            defaultAlias,
+            namespaceAlias
+        };
+    };
+    const importAbsolutePaths = parsedFile.imports
+        .map(importedModuleToImportDefinition)
+        .filter(/** @return {v is ImportDefinition} */(v) => Boolean(v));
     // import.defaultAlias
     // import.specifiers.specifier
     // Register module and return it
@@ -125,7 +127,7 @@ const findWorkspacePackage = (importedPath, workspacePackageMap) => {
     const packageNameSeparated = importedPath.split('/');
     const packageNameWithoutScope = packageNameSeparated[0];
     if (workspacePackageMap.has(packageNameWithoutScope)) {
-        const packageGlobalRoot = workspacePackageMap.get(packageNameWithoutScope);
+        const packageGlobalRoot = Global(workspacePackageMap.get(packageNameWithoutScope));
         const internalPath = Relative(packageNameSeparated.slice(1).join('/'));
         const importedGlobalPath = resolve(packageGlobalRoot, internalPath);
         return importedGlobalPath;
@@ -133,7 +135,7 @@ const findWorkspacePackage = (importedPath, workspacePackageMap) => {
 
     const packageNameWithScope = packageNameSeparated.slice(0, 2).join('/');
     if (workspacePackageMap.has(packageNameWithScope)) {
-        const packageGlobalRoot = workspacePackageMap.get(packageNameWithScope);
+        const packageGlobalRoot = Global(workspacePackageMap.get(packageNameWithScope));
         const internalPath = Relative(packageNameSeparated.slice(2).join('/'));
         const importedGlobalPath = resolve(packageGlobalRoot, internalPath);
         return importedGlobalPath;

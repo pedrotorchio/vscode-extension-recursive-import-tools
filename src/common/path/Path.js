@@ -7,6 +7,12 @@
  */
 
 /**
+ * @param {unknown} v
+ * @return {v is null | undefined}
+ */
+const isNil = (v) => v === null || v === undefined;
+
+/**
  * Creates a typed path object.
  * @param {string} rawPath
  * @param {PathType} type
@@ -24,28 +30,37 @@ function Path(rawPath, type) {
 
 /**
  * Creates a global path.
- * @param {string} rawPath
+ * @param {string | null | undefined} rawPath
  * @returns {GlobalPath}
  */
 function Global(rawPath) {
+    if (isNil(rawPath)) {
+        throw new Error('Global path cannot be undefined or empty');
+    }
     return /** @type {GlobalPath} */ (Path(rawPath, 'global'));
 }
 
 /**
  * Creates a relative path.
- * @param {string} rawPath
+ * @param {string | null | undefined} rawPath
  * @returns {RelativeImportPath}
  */
 function Relative(rawPath) {
+    if (isNil(rawPath)) {
+        throw new Error('Relative path cannot be undefined or empty');
+    }
     return /** @type {RelativeImportPath} */ (Path(rawPath, 'relative'));
 }
 
 /**
  * Creates a library path.
- * @param {string} rawPath
+ * @param {string | null | undefined} rawPath
  * @returns {LibraryImportPath}
  */
 function Library(rawPath) {
+    if (isNil(rawPath)) {
+        throw new Error('Library path cannot be undefined or empty');
+    }
     return /** @type {LibraryImportPath} */ (Path(rawPath, 'library'));
 }
 

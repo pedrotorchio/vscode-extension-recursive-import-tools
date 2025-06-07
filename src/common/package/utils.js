@@ -19,7 +19,9 @@ const { join } = require('../path/utils');
 function findNearestPackageJson(globalPath) {
     const packageJsonRaw = findPackageJson(globalPath.valueOf()).next();
     const { value: packageJson, filename: packagePath } = packageJsonRaw;
-
+    if (!packagePath || !packageJson) {
+        throw new Error(`No package.json found in path: ${globalPath.valueOf()}`);
+    }
     return {
         path: Global(packagePath),
         package: packageJson,
@@ -30,7 +32,7 @@ function findNearestPackageJson(globalPath) {
  * Finds the nearest package.json file to param `startPath` which contains a workspaces key and 
  * returns a map of all packages in the workspace.
  * @param {GlobalPath} startPath
- * @returns {WorkspacePackageMap | null} workspacePackageMap
+ * @returns {WorkspacePackageMap} workspacePackageMap
  */
 function getWorkspacePackageMap(startPath) {
     // iterate package json files until finding one with "workspaces" key
@@ -41,10 +43,10 @@ function getWorkspacePackageMap(startPath) {
             break;
         }
     }
-    if (!packageWithWorkspaces) return null;
-    const workspaceRoot = Global(path.dirname(packageWithWorkspaces.__path));
     /** @type Map<string, GlobalPath> */
     const workspacePackageMap = new Map();
+    if (!packageWithWorkspaces) return workspacePackageMap;
+    const workspaceRoot = Global(path.dirname(packageWithWorkspaces.__path));
     const workspacesArray = /** @type {string[]} */ (packageWithWorkspaces.workspaces);
     workspacesArray.forEach(workspaceGlob => {
         const packagesDir = join(workspaceRoot, workspaceGlob, 'package.json').valueOf();
